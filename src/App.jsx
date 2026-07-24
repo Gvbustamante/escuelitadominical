@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import CompleteProfile from './pages/CompleteProfile'
+import Tutorial from './pages/Tutorial'
 
 import AdminHome from './pages/admin/AdminHome'
 import Ninos from './pages/admin/Ninos'
@@ -40,6 +41,7 @@ export default function App() {
         }
       >
         <Route path="/" element={<RoleSwitchHome />} />
+        <Route path="/ayuda" element={<Tutorial />} />
 
         {/* Admin / coordinador */}
         <Route

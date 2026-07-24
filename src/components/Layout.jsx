@@ -8,6 +8,7 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   coordinador: [
     { to: '/', label: 'Inicio', icon: '🏠', end: true },
@@ -15,17 +16,20 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   docente: [
     { to: '/', label: 'Mis clases', icon: '🏠', end: true },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
     { to: '/actividades', label: 'Actividades', icon: '🎨' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
+    { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   padre: [
     { to: '/', label: 'Mi hijo/a', icon: '🏠', end: true },
     { to: '/actividades', label: 'Actividades', icon: '🎨' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
+    { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
 }
 
