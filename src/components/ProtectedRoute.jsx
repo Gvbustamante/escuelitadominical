@@ -3,11 +3,11 @@ import { useAuth } from '../contexts/AuthContext'
 import Spinner from './Spinner'
 
 export default function ProtectedRoute({ roles, children }) {
-  const { session, profile, loading, needsProfile } = useAuth()
+  const { session, profile, loading, needsProfile, passwordRecovery } = useAuth()
 
   if (loading) return <Spinner />
   if (!session) return <Navigate to="/login" replace />
-  if (needsProfile) return <Navigate to="/completar-perfil" replace />
+  if (passwordRecovery || needsProfile) return <Navigate to="/completar-perfil" replace />
   if (!profile) return <Spinner />
   if (profile.activo === false) {
     return (

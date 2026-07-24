@@ -3,23 +3,15 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { supabase } from '../lib/supabaseClient'
 
-const ROLE_LABEL = {
-  admin: 'Administrador',
-  coordinador: 'Coordinador',
-  docente: 'Docente',
-  padre: 'Padre / Madre',
-}
-
 export default function CompleteProfile() {
-  const { user, needsProfile, loading, refreshProfile, signOut } = useAuth()
-  const meta = user?.app_metadata || {}
-  const [nombre, setNombre] = useState(meta.nombre_completo || '')
+  const { user, profile, needsProfile, passwordRecovery, loading, refreshProfile, clearPasswordRecovery, signOut } = useAuth()
+  const [nombre, setNombre] = useState(profile?.nombre_completo || '')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  if (!loading && !needsProfile) return <Navigate to="/" replace />
+  if (!loading && !needsProfile && !passwordRecovery) return <Navigate to="/" replace />
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -42,27 +34,20 @@ export default function CompleteProfile() {
       return
     }
 
-    const role = meta.role || 'padre'
-    const { error: profileError } = await supabase.from('profiles').insert({
-      id: user.id,
-      role,
-      nombre_completo: nombre,
-      telefono: meta.telefono || null,
-    })
-    if (profileError) {
-      setError('No se pudo crear tu perfil: ' + profileError.message)
-      setBusy(false)
-      return
-    }
-
-    if (role === 'padre' && meta.nino_id) {
-      await supabase.from('ninos_padres').insert({
-        nino_id: meta.nino_id,
-        padre_id: user.id,
-        parentesco: meta.parentesco || null,
+    if (needsProfile) {
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: user.id,
+        role: 'padre',
+        nombre_completo: nombre,
       })
+      if (profileError) {
+        setError('No se pudo crear tu perfil: ' + profileError.message)
+        setBusy(false)
+        return
+      }
     }
 
+    clearPasswordRecovery()
     await refreshProfile()
     setBusy(false)
   }
@@ -72,17 +57,17 @@ export default function CompleteProfile() {
       <div className="card w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="text-6xl">🎉</span>
-          <h1 className="text-2xl font-bold text-grape-600">¡Bienvenido/a!</h1>
-          <p className="text-ink/50">
-            Completa tu cuenta como <strong>{ROLE_LABEL[meta.role] || 'usuario'}</strong>
-          </p>
+          <h1 className="text-2xl font-bold text-grape-600">¡Bienvenido/a{profile?.nombre_completo ? `, ${profile.nombre_completo.split(' ')[0]}` : ''}!</h1>
+          <p className="text-ink/50">Crea tu contraseña para entrar a la escuelita</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="label">Tu nombre completo</label>
-            <input required className="input" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          </div>
+          {needsProfile && (
+            <div>
+              <label className="label">Tu nombre completo</label>
+              <input required className="input" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+            </div>
+          )}
           <div>
             <label className="label">Crea una contraseña</label>
             <input
