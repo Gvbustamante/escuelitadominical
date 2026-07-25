@@ -26,7 +26,7 @@ export default function Login() {
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="text-6xl">📖</span>
           <h1 className="text-3xl uppercase text-sky-500">
-            Escuelita <span className="text-coral-500">Dominical</span>
+            Access <span className="text-coral-500">Kids</span>
           </h1>
           <p className="font-bold text-ink/50">Ingresa con tu cuenta</p>
         </div>

@@ -57,15 +57,15 @@ export default function DocenteHome() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Link to="/asistencia" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/asistencia" className="card-link flex items-center gap-3">
           <span className="text-3xl">✅</span>
           <p className="font-bold">Tomar asistencia</p>
         </Link>
-        <Link to="/actividades" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/actividades" className="card-link flex items-center gap-3">
           <span className="text-3xl">🎨</span>
           <p className="font-bold">Subir actividad</p>
         </Link>
-        <Link to="/agenda" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/agenda" className="card-link flex items-center gap-3">
           <span className="text-3xl">📅</span>
           <p className="font-bold">Agendar evento</p>
         </Link>

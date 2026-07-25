@@ -48,21 +48,21 @@ export default function AdminHome() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Link to="/ninos" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/ninos" className="card-link flex items-center gap-3">
           <span className="text-3xl">🧒</span>
           <div>
             <p className="font-bold">Gestionar niños</p>
             <p className="text-sm text-ink/50">Agregar, editar, desactivar</p>
           </div>
         </Link>
-        <Link to="/clases" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/clases" className="card-link flex items-center gap-3">
           <span className="text-3xl">🎒</span>
           <div>
             <p className="font-bold">Gestionar clases</p>
             <p className="text-sm text-ink/50">Niveles y edades</p>
           </div>
         </Link>
-        <Link to="/docentes" className="card flex items-center gap-3 hover:shadow-none active:translate-y-1">
+        <Link to="/docentes" className="card-link flex items-center gap-3">
           <span className="text-3xl">🍎</span>
           <div>
             <p className="font-bold">Invitar docentes</p>

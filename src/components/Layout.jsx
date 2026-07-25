@@ -56,7 +56,7 @@ export default function Layout() {
         <div className="mb-6 flex flex-col items-center gap-1 px-2 text-center">
           <span className="text-4xl">📖</span>
           <span className="hidden font-display text-lg font-extrabold uppercase leading-tight tracking-wide text-sky-500 md:block">
-            Escuelita <span className="text-coral-500">Dominical</span>
+            Access <span className="text-coral-500">Kids</span>
           </span>
         </div>
 

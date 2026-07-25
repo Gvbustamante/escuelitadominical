@@ -27,7 +27,12 @@ export function AuthProvider({ children }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       setSession(session)
-      loadProfile(session?.user?.id)
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setLoading(true)
+        loadProfile(session?.user?.id).finally(() => setLoading(false))
+      } else {
+        loadProfile(session?.user?.id)
+      }
     })
 
     return () => listener.subscription.unsubscribe()

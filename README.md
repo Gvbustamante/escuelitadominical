@@ -1,6 +1,6 @@
-# Escuelita Dominical 📖
+# Access Kids 📖
 
-Sistema de gestión para escuelas dominicales cristianas: niños, clases, docentes, asistencia, actividades y agenda — con un portal para padres.
+Sistema de gestión para escuelas dominicales cristianas: niños, clases, docentes, asistencia, actividades, devocionales y agenda — con un portal para padres.
 
 ## Stack
 
