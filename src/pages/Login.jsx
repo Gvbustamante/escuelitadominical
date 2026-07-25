@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
@@ -63,6 +63,9 @@ export default function Login() {
         <p className="mt-6 text-center text-sm text-ink/40">
           ¿No tienes cuenta? Pide al administrador de tu escuelita que te invite.
         </p>
+        <Link to="/bienvenida" className="mt-2 block text-center text-sm font-bold text-sky-500 hover:underline">
+          ← Conoce Access Kids
+        </Link>
       </div>
     </div>
   )

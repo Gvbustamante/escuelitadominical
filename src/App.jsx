@@ -4,6 +4,7 @@ import Spinner from './components/Spinner'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import Landing from './pages/Landing'
 import CompleteProfile from './pages/CompleteProfile'
 import Tutorial from './pages/Tutorial'
 import Devocionales from './pages/Devocionales'
@@ -33,6 +34,7 @@ export default function App() {
 
   return (
     <Routes>
+      <Route path="/bienvenida" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/completar-perfil" element={<CompleteProfile />} />
 
