@@ -145,22 +145,42 @@ export default function Landing() {
               <rect x="-6" y="18" width="6" height="16" rx="3" fill="#ff6a35" />
               <rect x="4" y="18" width="6" height="16" rx="3" fill="#ff6a35" />
               <rect x="-11" y="0" width="22" height="26" rx="9" fill="#ff6a35" />
-              <circle cx="0" cy="-13" r="13" fill="#ffcf9e" />
-              <path d="M-13 -18 Q0 -30 13 -18 Q13 -22 0 -24 Q-13 -22 -13 -18Z" fill="#5a3a22" />
+              <circle cx="0" cy="-13" r="13" fill="#5a3a22" />
+              <circle cx="0" cy="-10" r="10" fill="#ffcf9e" />
+              <circle cx="-3.5" cy="-10" r="1.4" fill="#2b2b2b" />
+              <circle cx="3.5" cy="-10" r="1.4" fill="#2b2b2b" />
+              <path d="M-3 -5 Q0 -3 3 -5" stroke="#c96b3f" strokeWidth="1.4" strokeLinecap="round" fill="none" />
             </g>
             <g transform="translate(404 254)">
               <rect x="-7" y="20" width="7" height="18" rx="3.5" fill="#1cade4" />
               <rect x="4" y="20" width="7" height="18" rx="3.5" fill="#1cade4" />
               <rect x="-13" y="0" width="26" height="30" rx="10" fill="#1cade4" />
-              <circle cx="0" cy="-15" r="15" fill="#ffcf9e" />
-              <path d="M-15 -20 Q0 -34 15 -20 Q15 -25 0 -27 Q-15 -25 -15 -20Z" fill="#2b2b2b" />
+              <circle cx="-14" cy="-8" r="4.4" fill="#2b2b2b" />
+              <circle cx="14" cy="-8" r="4.4" fill="#2b2b2b" />
+              <circle cx="0" cy="-15" r="15" fill="#2b2b2b" />
+              <circle cx="0" cy="-11" r="11" fill="#ffcf9e" />
+              <circle cx="-4" cy="-11" r="1.5" fill="#2b2b2b" />
+              <circle cx="4" cy="-11" r="1.5" fill="#2b2b2b" />
+              <path d="M-3.5 -5 Q0 -2.5 3.5 -5" stroke="#c96b3f" strokeWidth="1.5" strokeLinecap="round" fill="none" />
             </g>
             <g transform="translate(452 266)">
               <rect x="-6" y="17" width="6" height="15" rx="3" fill="#8339d6" />
               <rect x="4" y="17" width="6" height="15" rx="3" fill="#8339d6" />
               <rect x="-10" y="0" width="20" height="24" rx="8" fill="#8339d6" />
-              <circle cx="0" cy="-12" r="12" fill="#ffcf9e" />
-              <path d="M-12 -17 Q0 -28 12 -17 Q12 -20 0 -22 Q-12 -20 -12 -17Z" fill="#7a4a1e" />
+              {[-150, -115, -80, -45, -10].map((a) => (
+                <circle
+                  key={a}
+                  cx={Math.cos((a * Math.PI) / 180) * 12}
+                  cy={-12 + Math.sin((a * Math.PI) / 180) * 12}
+                  r="4.2"
+                  fill="#7a4a1e"
+                />
+              ))}
+              <circle cx="0" cy="-12" r="12" fill="#7a4a1e" />
+              <circle cx="0" cy="-9" r="9" fill="#ffcf9e" />
+              <circle cx="-3" cy="-9" r="1.3" fill="#2b2b2b" />
+              <circle cx="3" cy="-9" r="1.3" fill="#2b2b2b" />
+              <path d="M-3 -4 Q0 -2 3 -4" stroke="#c96b3f" strokeWidth="1.3" strokeLinecap="round" fill="none" />
             </g>
 
             {/* biblia radiante en la cima */}
