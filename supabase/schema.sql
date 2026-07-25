@@ -131,8 +131,10 @@ create table public.citas_biblicas (
   texto text not null,
   referencia text not null,
   activo boolean not null default true,
+  fecha_mostrar date unique,
   created_at timestamptz not null default now()
 );
+comment on column public.citas_biblicas.fecha_mostrar is 'Fecha calendario en la que esta cita se muestra como "cita del día". Null = no programada, queda disponible en el pool.';
 
 -- ---------- SEGURIDAD (RLS) ----------
 

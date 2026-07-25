@@ -18,6 +18,7 @@ import Docentes from './pages/admin/Docentes'
 import AsistenciaAdmin from './pages/admin/AsistenciaAdmin'
 import ActividadesAdmin from './pages/admin/ActividadesAdmin'
 import AgendaAdmin from './pages/admin/AgendaAdmin'
+import CitasBiblicasAdmin from './pages/admin/CitasBiblicasAdmin'
 
 import DocenteHome from './pages/docente/DocenteHome'
 import Asistencia from './pages/docente/Asistencia'
@@ -92,6 +93,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={[...STAFF, 'docente']}>
               <RoleSwitchAsistencia />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/citas-biblicas"
+          element={
+            <ProtectedRoute roles={STAFF}>
+              <CitasBiblicasAdmin />
             </ProtectedRoute>
           }
         />
