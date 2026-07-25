@@ -434,3 +434,43 @@ insert into public.citas_biblicas (texto, referencia) values
 ('Y sabemos que a los que aman a Dios, todas las cosas les ayudan a bien.', 'Romanos 8:28'),
 ('No temas, porque yo estoy contigo; no desmayes, porque yo soy tu Dios.', 'Isaías 41:10'),
 ('Dejad que los niños vengan a mí, y no se lo impidáis; porque de los tales es el reino de los cielos.', 'Mateo 19:14');
+
+-- ---------- FORO ----------
+
+create table public.foros (
+  id uuid primary key default gen_random_uuid(),
+  titulo text not null,
+  categoria text not null default 'general' check (categoria in ('general','evento')),
+  evento_id uuid references public.agenda(id) on delete set null,
+  creado_por uuid references public.profiles(id),
+  created_at timestamptz not null default now()
+);
+
+create table public.foro_mensajes (
+  id uuid primary key default gen_random_uuid(),
+  foro_id uuid references public.foros(id) on delete cascade,
+  autor_id uuid references public.profiles(id),
+  mensaje text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.foros enable row level security;
+alter table public.foro_mensajes enable row level security;
+
+create policy "leer foros" on public.foros for select to authenticated using (true);
+create policy "crear foro" on public.foros for insert to authenticated
+  with check (creado_por = auth.uid());
+create policy "borrar foro propio o staff" on public.foros for delete to authenticated
+  using (
+    creado_por = auth.uid()
+    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin','coordinador'))
+  );
+
+create policy "leer mensajes" on public.foro_mensajes for select to authenticated using (true);
+create policy "crear mensaje" on public.foro_mensajes for insert to authenticated
+  with check (autor_id = auth.uid());
+create policy "borrar mensaje propio o staff" on public.foro_mensajes for delete to authenticated
+  using (
+    autor_id = auth.uid()
+    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin','coordinador'))
+  );

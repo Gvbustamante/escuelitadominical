@@ -9,12 +9,15 @@ import CompleteProfile from './pages/CompleteProfile'
 import Tutorial from './pages/Tutorial'
 import Devocionales from './pages/Devocionales'
 import MiFamilia from './pages/MiFamilia'
+import Foro from './pages/Foro'
 
 import AdminHome from './pages/admin/AdminHome'
 import Ninos from './pages/admin/Ninos'
 import Clases from './pages/admin/Clases'
 import Docentes from './pages/admin/Docentes'
 import AsistenciaAdmin from './pages/admin/AsistenciaAdmin'
+import ActividadesAdmin from './pages/admin/ActividadesAdmin'
+import AgendaAdmin from './pages/admin/AgendaAdmin'
 
 import DocenteHome from './pages/docente/DocenteHome'
 import Asistencia from './pages/docente/Asistencia'
@@ -49,6 +52,7 @@ export default function App() {
         <Route path="/" element={<RoleSwitchHome />} />
         <Route path="/ayuda" element={<Tutorial />} />
         <Route path="/devocionales" element={<Devocionales />} />
+        <Route path="/foro" element={<Foro />} />
         <Route
           path="/mi-familia"
           element={
@@ -96,7 +100,7 @@ export default function App() {
         <Route
           path="/actividades"
           element={
-            <ProtectedRoute roles={['docente', 'padre']}>
+            <ProtectedRoute roles={[...STAFF, 'docente', 'padre']}>
               <RoleSwitchActividades />
             </ProtectedRoute>
           }
@@ -104,7 +108,7 @@ export default function App() {
         <Route
           path="/agenda"
           element={
-            <ProtectedRoute roles={['docente', 'padre']}>
+            <ProtectedRoute roles={[...STAFF, 'docente', 'padre']}>
               <RoleSwitchAgenda />
             </ProtectedRoute>
           }
@@ -136,11 +140,13 @@ function RoleSwitchAsistencia() {
 
 function RoleSwitchActividades() {
   const { profile } = useAuth()
+  if (STAFF.includes(profile.role)) return <ActividadesAdmin />
   return profile.role === 'docente' ? <Actividades /> : <PadreActividades />
 }
 
 function RoleSwitchAgenda() {
   const { profile } = useAuth()
+  if (STAFF.includes(profile.role)) return <AgendaAdmin />
   return profile.role === 'docente' ? <Agenda /> : <PadreAgenda />
 }
 

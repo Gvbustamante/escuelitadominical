@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useMisClases } from '../../lib/useMisClases'
 import Spinner from '../../components/Spinner'
 import Modal from '../../components/Modal'
+import CalendarioAgenda from '../../components/CalendarioAgenda'
 
 function hoyISO() {
   return new Date().toISOString().slice(0, 10)
@@ -13,6 +14,7 @@ export default function Agenda() {
   const { user } = useAuth()
   const { clases, nivelId, setNivelId } = useMisClases()
   const [eventos, setEventos] = useState(null)
+  const [selectedDay, setSelectedDay] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState({ titulo: '', descripcion: '', fecha: hoyISO() })
   const [busy, setBusy] = useState(false)
@@ -28,7 +30,7 @@ export default function Agenda() {
   }, [load])
 
   function openNew() {
-    setForm({ titulo: '', descripcion: '', fecha: hoyISO() })
+    setForm({ titulo: '', descripcion: '', fecha: selectedDay || hoyISO() })
     setModalOpen(true)
   }
 
@@ -50,6 +52,7 @@ export default function Agenda() {
   if (clases.length === 0) return <p className="card text-ink/50">No tienes clases asignadas todavía.</p>
 
   const hoy = hoyISO()
+  const eventosDelDia = eventos ? (selectedDay ? eventos.filter((e) => e.fecha === selectedDay) : eventos) : []
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,25 +77,29 @@ export default function Agenda() {
       {!eventos ? (
         <Spinner />
       ) : (
-        <div className="flex flex-col gap-3">
-          {eventos.map((ev) => (
-            <div key={ev.id} className={`card flex items-center justify-between gap-4 ${ev.fecha < hoy ? 'opacity-50' : ''}`}>
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 flex-col items-center justify-center rounded-2xl bg-sunshine-100 text-sunshine-700">
-                  <span className="text-xs font-bold">{new Date(ev.fecha + 'T00:00').toLocaleDateString('es', { month: 'short' })}</span>
-                  <span className="text-lg font-bold leading-none">{new Date(ev.fecha + 'T00:00').getDate()}</span>
-                </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <CalendarioAgenda eventos={eventos} selectedDay={selectedDay} onSelectDay={setSelectedDay} />
+
+          <div className="flex flex-col gap-3">
+            {selectedDay && (
+              <button onClick={() => setSelectedDay(null)} className="self-start text-sm font-bold text-sky-500 hover:underline">
+                ← Ver todos los eventos
+              </button>
+            )}
+            {eventosDelDia.map((ev) => (
+              <div key={ev.id} className={`card flex items-center justify-between gap-4 ${ev.fecha < hoy ? 'opacity-50' : ''}`}>
                 <div>
                   <p className="font-bold">{ev.titulo}</p>
+                  <p className="text-sm text-ink/50">{ev.fecha}</p>
                   {ev.descripcion && <p className="text-sm text-ink/50">{ev.descripcion}</p>}
                 </div>
+                <button onClick={() => eliminar(ev.id)} className="text-2xl text-ink/30 hover:text-coral-500">
+                  🗑️
+                </button>
               </div>
-              <button onClick={() => eliminar(ev.id)} className="text-2xl text-ink/30 hover:text-coral-500">
-                🗑️
-              </button>
-            </div>
-          ))}
-          {eventos.length === 0 && <p className="card text-ink/50">No hay eventos programados.</p>}
+            ))}
+            {eventosDelDia.length === 0 && <p className="card text-ink/50">No hay eventos programados.</p>}
+          </div>
         </div>
       )}
 

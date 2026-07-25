@@ -11,7 +11,10 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/actividades', label: 'Actividades', icon: '🎨' },
+    { to: '/agenda', label: 'Agenda', icon: '📅' },
     { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
+    { to: '/foro', label: 'Foro', icon: '💬' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   coordinador: [
@@ -20,7 +23,10 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/actividades', label: 'Actividades', icon: '🎨' },
+    { to: '/agenda', label: 'Agenda', icon: '📅' },
     { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
+    { to: '/foro', label: 'Foro', icon: '💬' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   docente: [
@@ -30,6 +36,7 @@ const NAV = {
     { to: '/progreso', label: 'Progreso', icon: '🌱' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
     { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
+    { to: '/foro', label: 'Foro', icon: '💬' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   padre: [
@@ -38,6 +45,7 @@ const NAV = {
     { to: '/progreso', label: 'Progreso', icon: '🌱' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
     { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
+    { to: '/foro', label: 'Foro', icon: '💬' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
 }
