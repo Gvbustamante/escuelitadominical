@@ -1,4 +1,15 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xdaqpawn'
+
+const MOTIVOS = [
+  { value: 'quiero-tenerla', label: 'Quiero tenerla en mi iglesia' },
+  { value: 'sugerencia', label: 'Tengo una sugerencia o idea de mejora' },
+  { value: 'soporte', label: 'Necesito ayuda o soporte' },
+  { value: 'donar', label: 'Quiero donar u ofrendar' },
+  { value: 'otro', label: 'Otro' },
+]
 
 const FEATURES = [
   { icon: '🎒', title: 'Clases y niveles', text: 'Organiza a los peques por edad, con su docente asignada.' },
@@ -235,6 +246,21 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* CONTACTO */}
+      <section className="mx-auto mt-20 max-w-2xl px-6">
+        <div className="text-center">
+          <span className="badge bg-sky-100 text-sky-700">Hablemos</span>
+          <h2 className="mt-3 text-3xl uppercase text-sky-600">¿Quieres tenerla en tu iglesia?</h2>
+          <p className="mx-auto mt-3 max-w-lg text-ink/60">
+            Escríbeme si quieres Access Kids para tu escuelita, si tienes una sugerencia, si necesitas
+            soporte o si quieres apoyar el proyecto de otra forma. Leo todos los mensajes.
+          </p>
+        </div>
+        <div className="card mt-8">
+          <ContactoForm />
+        </div>
+      </section>
+
       {/* CTA FINAL */}
       <footer className="mt-20 bg-ink px-6 py-14 text-center text-white">
         <h2 className="text-2xl uppercase">¿Lista tu escuelita para empezar?</h2>
@@ -245,5 +271,89 @@ export default function Landing() {
         <p className="mt-8 text-xs text-white/30">Access Kids, hecho con fe, como ofrenda para la gloria de Dios.</p>
       </footer>
     </div>
+  )
+}
+
+function ContactoForm() {
+  const [form, setForm] = useState({ nombre: '', iglesia: '', contacto: '', motivo: 'quiero-tenerla', mensaje: '' })
+  const [status, setStatus] = useState('idle') // idle | enviando | ok | error
+
+  function set(field) {
+    return (e) => setForm((f) => ({ ...f, [field]: e.target.value }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setStatus('enviando')
+    try {
+      const res = await fetch(FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) throw new Error('request failed')
+      setStatus('ok')
+      setForm({ nombre: '', iglesia: '', contacto: '', motivo: 'quiero-tenerla', mensaje: '' })
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  if (status === 'ok') {
+    return (
+      <div className="flex flex-col items-center gap-2 py-6 text-center">
+        <span className="text-4xl">💌</span>
+        <p className="text-lg font-extrabold text-sky-600">¡Mensaje enviado!</p>
+        <p className="text-ink/60">Gracias por escribir. Te responderé pronto.</p>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="label">Tu nombre</label>
+          <input required className="input" value={form.nombre} onChange={set('nombre')} placeholder="Ej. María Pérez" />
+        </div>
+        <div>
+          <label className="label">Iglesia (opcional)</label>
+          <input className="input" value={form.iglesia} onChange={set('iglesia')} placeholder="Ej. Iglesia Emmanuel" />
+        </div>
+      </div>
+      <div>
+        <label className="label">Correo o teléfono para contactarte</label>
+        <input required className="input" value={form.contacto} onChange={set('contacto')} placeholder="tucorreo@ejemplo.com o tu número" />
+      </div>
+      <div>
+        <label className="label">¿Sobre qué nos escribes?</label>
+        <select className="input" value={form.motivo} onChange={set('motivo')}>
+          {MOTIVOS.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="label">Mensaje</label>
+        <textarea
+          required
+          rows={4}
+          className="input"
+          value={form.mensaje}
+          onChange={set('mensaje')}
+          placeholder="Cuéntame un poco más..."
+        />
+      </div>
+      {status === 'error' && (
+        <p className="rounded-xl bg-coral-50 px-3 py-2 text-sm font-bold text-coral-600">
+          No se pudo enviar tu mensaje. Intenta de nuevo en un momento.
+        </p>
+      )}
+      <button disabled={status === 'enviando'} className="btn-primary justify-center">
+        {status === 'enviando' ? 'Enviando...' : 'Enviar mensaje'}
+      </button>
+    </form>
   )
 }
