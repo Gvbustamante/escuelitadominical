@@ -352,7 +352,7 @@ declare
   v_email text;
   v_password text;
 begin
-  select role into caller_role from public.profiles where id = auth.uid();
+  select p.role into caller_role from public.profiles p where p.id = auth.uid();
 
   if caller_role is null or caller_role not in ('admin','coordinador') then
     raise exception 'No autorizado';
@@ -374,7 +374,7 @@ begin
     raise exception 'Falta la cedula';
   end if;
 
-  if exists (select 1 from public.profiles where cedula = v_cedula) then
+  if exists (select 1 from public.profiles p where p.cedula = v_cedula) then
     raise exception 'Ya existe una cuenta con esa cedula';
   end if;
 
