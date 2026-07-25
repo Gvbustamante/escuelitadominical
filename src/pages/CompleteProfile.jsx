@@ -53,7 +53,7 @@ export default function CompleteProfile() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-grape-100 via-cream to-sky-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-grape-100 p-4">
       <div className="card w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="text-6xl">🎉</span>

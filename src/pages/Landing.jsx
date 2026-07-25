@@ -26,7 +26,7 @@ export default function Landing() {
             y todo el equipo de la escuelita, en orden y sin enredos.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-            <Link to="/login" className="btn bg-white text-sky-600 shadow-[0_4px_0_0_theme(colors.sky.700)] hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_theme(colors.sky.700)] active:shadow-[0_1px_0_0_theme(colors.sky.700)]">
+            <Link to="/login" className="btn bg-white text-sky-600">
               Ingresar a mi cuenta
             </Link>
           </div>

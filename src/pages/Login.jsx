@@ -25,7 +25,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-100 via-cream to-sunshine-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-sky-100 p-4">
       <div className="card w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="text-6xl">📖</span>

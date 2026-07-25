@@ -17,34 +17,26 @@
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-chunky px-6 py-3 text-base font-extrabold uppercase tracking-wide
-           transition-all duration-150 ease-out active:translate-y-1 select-none disabled:opacity-50 disabled:pointer-events-none;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-lg font-extrabold shadow-soft
+           transition-all duration-150 ease-out hover:scale-[1.03] active:scale-95 select-none disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-sky-400 text-white shadow-[0_4px_0_0_theme(colors.sky.600)]
-           hover:bg-sky-300 hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_theme(colors.sky.600)]
-           active:shadow-[0_1px_0_0_theme(colors.sky.600)];
+    @apply btn bg-sky-400 text-white hover:bg-sky-500;
   }
   .btn-secondary {
-    @apply btn bg-white text-ink border-2 border-ink/10 shadow-[0_4px_0_0_theme(colors.ink/10)]
-           hover:bg-ink/[0.03] hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_theme(colors.ink/10)]
-           active:shadow-[0_1px_0_0_theme(colors.ink/10)];
+    @apply btn bg-white text-ink border-2 border-ink/10 hover:bg-ink/5;
   }
   .btn-success {
-    @apply btn bg-grass-400 text-white shadow-[0_4px_0_0_theme(colors.grass.600)]
-           hover:bg-grass-300 hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_theme(colors.grass.600)]
-           active:shadow-[0_1px_0_0_theme(colors.grass.600)];
+    @apply btn bg-grass-400 text-white hover:bg-grass-500;
   }
   .btn-danger {
-    @apply btn bg-coral-400 text-white shadow-[0_4px_0_0_theme(colors.coral.600)]
-           hover:bg-coral-300 hover:-translate-y-0.5 hover:shadow-[0_6px_0_0_theme(colors.coral.600)]
-           active:shadow-[0_1px_0_0_theme(colors.coral.600)];
+    @apply btn bg-coral-400 text-white hover:bg-coral-500;
   }
   .card {
-    @apply bg-white rounded-blob shadow-card border border-ink/[0.04] p-6;
+    @apply bg-white rounded-blob shadow-card border-2 border-sky-50 p-6;
   }
   .card-link {
-    @apply card transition-all duration-150 ease-out hover:-translate-y-1 hover:shadow-soft cursor-pointer;
+    @apply card transition-transform duration-150 ease-out hover:scale-[1.02] cursor-pointer;
   }
   .input {
     @apply w-full rounded-chunky border-2 border-ink/10 bg-white px-4 py-3 text-lg text-ink
