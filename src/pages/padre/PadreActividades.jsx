@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 import { useMisHijos } from '../../lib/useMisHijos'
 import Spinner from '../../components/Spinner'
+import HijoSelector from '../../components/HijoSelector'
 
 const REACCIONES = ['❤️', '👏', '🙌', '😍']
 
@@ -10,10 +11,12 @@ export default function PadreActividades() {
   const { user } = useAuth()
   const hijos = useMisHijos()
   const [actividades, setActividades] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
 
   const load = useCallback(async () => {
     if (!hijos) return
-    const nivelIds = [...new Set(hijos.map((h) => h.nivel_id).filter(Boolean))]
+    const hijosActivos = selectedId ? hijos.filter((h) => h.id === selectedId) : hijos
+    const nivelIds = [...new Set(hijosActivos.map((h) => h.nivel_id).filter(Boolean))]
     if (nivelIds.length === 0) {
       setActividades([])
       return
@@ -24,7 +27,7 @@ export default function PadreActividades() {
       .in('nivel_id', nivelIds)
       .order('fecha', { ascending: false })
     setActividades(data || [])
-  }, [hijos])
+  }, [hijos, selectedId])
 
   useEffect(() => {
     load()
@@ -56,6 +59,8 @@ export default function PadreActividades() {
         <h1 className="text-3xl font-bold">Actividades 🎨</h1>
         <p className="text-ink/50">Lo que hicieron en la escuelita</p>
       </div>
+
+      <HijoSelector hijos={hijos} selectedId={selectedId} onChange={setSelectedId} />
 
       <div className="flex flex-col gap-4">
         {actividades.map((a) => {

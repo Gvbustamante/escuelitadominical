@@ -1,5 +1,5 @@
 -- ============================================================
--- Escuelita Dominical — esquema completo de base de datos
+-- Access Kids — esquema completo de base de datos
 -- Copia y pega TODO este archivo en Supabase → SQL Editor → Run
 -- Se ejecuta UNA sola vez, en un proyecto de Supabase nuevo/vacío.
 -- ============================================================
@@ -10,6 +10,7 @@ create table public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role text not null check (role in ('admin','coordinador','docente','padre')),
   nombre_completo text not null,
+  cedula text unique,
   telefono text,
   activo boolean not null default true,
   created_at timestamptz not null default now()
@@ -330,16 +331,16 @@ create policy "staff elimina archivos de actividades"
     and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role in ('admin','coordinador','docente'))
   );
 
--- ---------- FUNCIÓN: invitar usuarios (admin/coordinador) ----------
+-- ---------- FUNCIÓN: crear usuarios con cédula (admin/coordinador) ----------
 
 create or replace function public.admin_create_invited_user(
-  p_email text,
+  p_cedula text,
   p_role text,
   p_nombre_completo text,
   p_nino_id uuid default null,
   p_parentesco text default null
 )
-returns uuid
+returns table (id uuid, password text)
 language plpgsql
 security definer
 set search_path = public, auth, extensions
@@ -347,6 +348,9 @@ as $$
 declare
   caller_role text;
   new_user_id uuid;
+  v_cedula text := trim(p_cedula);
+  v_email text;
+  v_password text;
 begin
   select role into caller_role from public.profiles where id = auth.uid();
 
@@ -366,10 +370,16 @@ begin
     raise exception 'Falta nino_id para invitar a un padre';
   end if;
 
-  if exists (select 1 from auth.users where email = p_email) then
-    raise exception 'Ya existe una cuenta con ese correo';
+  if v_cedula is null or v_cedula = '' then
+    raise exception 'Falta la cedula';
   end if;
 
+  if exists (select 1 from public.profiles where cedula = v_cedula) then
+    raise exception 'Ya existe una cuenta con esa cedula';
+  end if;
+
+  v_email := lower(regexp_replace(v_cedula, '[^a-zA-Z0-9]', '', 'g')) || '@accesskids.local';
+  v_password := v_cedula || '.';
   new_user_id := gen_random_uuid();
 
   insert into auth.users (
@@ -379,8 +389,8 @@ begin
     email_change_token_new, email_change
   ) values (
     '00000000-0000-0000-0000-000000000000',
-    new_user_id, 'authenticated', 'authenticated', p_email,
-    crypt(encode(gen_random_bytes(18), 'base64'), gen_salt('bf')),
+    new_user_id, 'authenticated', 'authenticated', v_email,
+    crypt(v_password, gen_salt('bf')),
     now(),
     jsonb_build_object('provider','email','providers', array['email']),
     '{}'::jsonb,
@@ -390,19 +400,19 @@ begin
   insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
   values (
     gen_random_uuid(), new_user_id::text, new_user_id,
-    jsonb_build_object('sub', new_user_id::text, 'email', p_email),
+    jsonb_build_object('sub', new_user_id::text, 'email', v_email),
     'email', now(), now(), now()
   );
 
-  insert into public.profiles (id, role, nombre_completo)
-  values (new_user_id, p_role, p_nombre_completo);
+  insert into public.profiles (id, role, nombre_completo, cedula)
+  values (new_user_id, p_role, p_nombre_completo, v_cedula);
 
   if p_role = 'padre' then
     insert into public.ninos_padres (nino_id, padre_id, parentesco)
     values (p_nino_id, new_user_id, p_parentesco);
   end if;
 
-  return new_user_id;
+  return query select new_user_id, v_password;
 end;
 $$;
 

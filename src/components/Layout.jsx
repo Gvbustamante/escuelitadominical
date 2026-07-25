@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabaseClient'
+import CambiarPasswordModal from './CambiarPasswordModal'
 
 const NAV = {
   admin: [
@@ -47,8 +50,23 @@ const ROLE_LABEL = {
 }
 
 export default function Layout() {
-  const { profile, signOut } = useAuth()
-  const items = NAV[profile?.role] || []
+  const { profile, user, signOut } = useAuth()
+  const [pwOpen, setPwOpen] = useState(false)
+  const [tieneHijos, setTieneHijos] = useState(false)
+
+  useEffect(() => {
+    if (!user || profile?.role === 'padre') return
+    supabase
+      .from('ninos_padres')
+      .select('nino_id', { count: 'exact', head: true })
+      .eq('padre_id', user.id)
+      .then(({ count }) => setTieneHijos((count || 0) > 0))
+  }, [user, profile?.role])
+
+  const items = [...(NAV[profile?.role] || [])]
+  if (tieneHijos && ['admin', 'coordinador', 'docente'].includes(profile?.role)) {
+    items.splice(1, 0, { to: '/mi-familia', label: 'Mi familia', icon: '👪' })
+  }
 
   return (
     <div className="flex min-h-screen bg-cream">
@@ -85,6 +103,10 @@ export default function Layout() {
             <p className="truncate text-sm font-bold">{profile?.nombre_completo}</p>
             <p className="text-xs text-ink/50">{ROLE_LABEL[profile?.role]}</p>
           </div>
+          <button onClick={() => setPwOpen(true)} className="btn-secondary w-full !py-2 !text-base">
+            <span>🔑</span>
+            <span className="hidden md:block">Contraseña</span>
+          </button>
           <button onClick={signOut} className="btn-secondary w-full !py-2 !text-base">
             <span>🚪</span>
             <span className="hidden md:block">Salir</span>
@@ -95,6 +117,8 @@ export default function Layout() {
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         <Outlet />
       </main>
+
+      <CambiarPasswordModal open={pwOpen} onClose={() => setPwOpen(false)} />
     </div>
   )
 }

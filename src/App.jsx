@@ -8,6 +8,7 @@ import Landing from './pages/Landing'
 import CompleteProfile from './pages/CompleteProfile'
 import Tutorial from './pages/Tutorial'
 import Devocionales from './pages/Devocionales'
+import MiFamilia from './pages/MiFamilia'
 
 import AdminHome from './pages/admin/AdminHome'
 import Ninos from './pages/admin/Ninos'
@@ -48,6 +49,14 @@ export default function App() {
         <Route path="/" element={<RoleSwitchHome />} />
         <Route path="/ayuda" element={<Tutorial />} />
         <Route path="/devocionales" element={<Devocionales />} />
+        <Route
+          path="/mi-familia"
+          element={
+            <ProtectedRoute roles={[...STAFF, 'docente']}>
+              <MiFamilia />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin / coordinador */}
         <Route

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useMisHijos } from '../../lib/useMisHijos'
 import Spinner from '../../components/Spinner'
+import HijoSelector from '../../components/HijoSelector'
 
 export default function PadreProgreso() {
   const hijos = useMisHijos()
   const [notasPorHijo, setNotasPorHijo] = useState(null)
+  const [selectedId, setSelectedId] = useState(null)
 
   useEffect(() => {
     async function load() {
@@ -28,6 +30,8 @@ export default function PadreProgreso() {
 
   if (!hijos || !notasPorHijo) return <Spinner />
 
+  const hijosAMostrar = selectedId ? hijos.filter((h) => h.id === selectedId) : hijos
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -35,7 +39,9 @@ export default function PadreProgreso() {
         <p className="text-ink/50">Cómo le fue a tu hijo/a en cada clase</p>
       </div>
 
-      {hijos.map((h) => (
+      <HijoSelector hijos={hijos} selectedId={selectedId} onChange={setSelectedId} />
+
+      {hijosAMostrar.map((h) => (
         <div key={h.id}>
           <h2 className="mb-2 text-xl font-bold">{h.nombre_completo}</h2>
           <div className="flex flex-col gap-3">
@@ -55,6 +61,7 @@ export default function PadreProgreso() {
           </div>
         </div>
       ))}
+      {hijos.length === 0 && <p className="card text-ink/50">Aún no tienes niños vinculados.</p>}
     </div>
   )
 }

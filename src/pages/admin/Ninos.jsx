@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { inviteUser } from '../../lib/invite'
+import { crearUsuario } from '../../lib/invite'
 import Spinner from '../../components/Spinner'
 import Modal from '../../components/Modal'
 import { BADGE_CLASSES } from '../../lib/colors'
@@ -29,9 +29,15 @@ export default function Ninos() {
   const [busy, setBusy] = useState(false)
 
   const [inviteModal, setInviteModal] = useState(null)
-  const [inviteForm, setInviteForm] = useState({ email: '', nombre_completo: '', parentesco: '' })
+  const [modoVinculo, setModoVinculo] = useState('nueva')
+  const [inviteForm, setInviteForm] = useState({ cedula: '', nombre_completo: '', parentesco: '' })
   const [inviteMsg, setInviteMsg] = useState('')
   const [inviteBusy, setInviteBusy] = useState(false)
+  const [creado, setCreado] = useState(null)
+  const [todosPerfiles, setTodosPerfiles] = useState([])
+  const [busquedaPerfil, setBusquedaPerfil] = useState('')
+  const [perfilSeleccionado, setPerfilSeleccionado] = useState(null)
+  const [parentescoExistente, setParentescoExistente] = useState('')
 
   const load = useCallback(async () => {
     const [{ data: n }, { data: niv }, { data: np }] = await Promise.all([
@@ -110,29 +116,64 @@ export default function Ninos() {
 
   function openInvite(nino) {
     setInviteModal(nino)
-    setInviteForm({ email: '', nombre_completo: '', parentesco: '' })
+    setModoVinculo('nueva')
+    setInviteForm({ cedula: '', nombre_completo: '', parentesco: '' })
     setInviteMsg('')
+    setCreado(null)
+    setBusquedaPerfil('')
+    setPerfilSeleccionado(null)
+    setParentescoExistente('')
+    supabase.from('profiles').select('*').order('nombre_completo').then(({ data }) => setTodosPerfiles(data || []))
   }
 
-  async function handleInvite(e) {
+  async function handleInviteNueva(e) {
     e.preventDefault()
     setInviteBusy(true)
     setInviteMsg('')
     try {
-      await inviteUser({
-        email: inviteForm.email,
+      const { password } = await crearUsuario({
+        cedula: inviteForm.cedula,
         nombre_completo: inviteForm.nombre_completo,
         role: 'padre',
         nino_id: inviteModal.id,
         parentesco: inviteForm.parentesco,
       })
-      setInviteMsg('✅ Invitación enviada por correo.')
+      setCreado({ cedula: inviteForm.cedula, password, nombre: inviteForm.nombre_completo })
       load()
     } catch (err) {
       setInviteMsg('❌ ' + err.message)
     }
     setInviteBusy(false)
   }
+
+  async function handleVincularExistente(e) {
+    e.preventDefault()
+    if (!perfilSeleccionado) return
+    setInviteBusy(true)
+    setInviteMsg('')
+    const { error } = await supabase.from('ninos_padres').insert({
+      nino_id: inviteModal.id,
+      padre_id: perfilSeleccionado.id,
+      parentesco: parentescoExistente || null,
+    })
+    setInviteBusy(false)
+    if (error) {
+      setInviteMsg('❌ ' + error.message)
+      return
+    }
+    setInviteMsg(`✅ ${perfilSeleccionado.nombre_completo} vinculado/a como padre/madre.`)
+    load()
+  }
+
+  const yaVinculadosIds = new Set((padresPorNino[inviteModal?.id] || []).map((p) => p.padre?.id).filter(Boolean))
+  const perfilesFiltrados = todosPerfiles
+    .filter((p) => !yaVinculadosIds.has(p.id))
+    .filter(
+      (p) =>
+        p.nombre_completo.toLowerCase().includes(busquedaPerfil.toLowerCase()) ||
+        (p.cedula || '').includes(busquedaPerfil),
+    )
+    .slice(0, 8)
 
   if (!ninos) return <Spinner />
 
@@ -281,41 +322,133 @@ export default function Ninos() {
         </form>
       </Modal>
 
-      <Modal open={!!inviteModal} onClose={() => setInviteModal(null)} title={`Invitar padre/madre de ${inviteModal?.nombre_completo || ''}`}>
-        <form onSubmit={handleInvite} className="flex flex-col gap-4">
-          <div>
-            <label className="label">Nombre del padre/madre</label>
-            <input
-              required
-              className="input"
-              value={inviteForm.nombre_completo}
-              onChange={(e) => setInviteForm({ ...inviteForm, nombre_completo: e.target.value })}
-            />
+      <Modal open={!!inviteModal} onClose={() => setInviteModal(null)} title={`Padre/madre de ${inviteModal?.nombre_completo || ''}`}>
+        {creado ? (
+          <div className="flex flex-col gap-4 text-center">
+            <span className="text-4xl">✅</span>
+            <p className="font-bold">Cuenta creada para {creado.nombre}</p>
+            <div className="rounded-chunky bg-grass-50 p-4">
+              <p className="text-xs font-extrabold uppercase text-ink/40">Cédula (usuario)</p>
+              <p className="text-xl font-extrabold text-grass-700">{creado.cedula}</p>
+              <p className="mt-2 text-xs font-extrabold uppercase text-ink/40">Contraseña</p>
+              <p className="text-xl font-extrabold text-grass-700">{creado.password}</p>
+            </div>
+            <p className="text-sm text-ink/50">Comunícale estos datos para que pueda entrar.</p>
+            <button className="btn-primary justify-center" onClick={() => setInviteModal(null)}>
+              Listo
+            </button>
           </div>
-          <div>
-            <label className="label">Correo electrónico</label>
-            <input
-              type="email"
-              required
-              className="input"
-              value={inviteForm.email}
-              onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
-            />
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setModoVinculo('nueva')}
+                className={`flex-1 rounded-chunky px-3 py-2 text-sm font-bold ${modoVinculo === 'nueva' ? 'bg-sky-400 text-white' : 'bg-ink/5'}`}
+              >
+                Crear cuenta nueva
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoVinculo('existente')}
+                className={`flex-1 rounded-chunky px-3 py-2 text-sm font-bold ${modoVinculo === 'existente' ? 'bg-sky-400 text-white' : 'bg-ink/5'}`}
+              >
+                Ya tiene cuenta
+              </button>
+            </div>
+
+            {modoVinculo === 'nueva' ? (
+              <form onSubmit={handleInviteNueva} className="flex flex-col gap-4">
+                <div>
+                  <label className="label">Nombre del padre/madre</label>
+                  <input
+                    required
+                    className="input"
+                    value={inviteForm.nombre_completo}
+                    onChange={(e) => setInviteForm({ ...inviteForm, nombre_completo: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="label">Cédula</label>
+                  <input
+                    required
+                    className="input"
+                    value={inviteForm.cedula}
+                    onChange={(e) => setInviteForm({ ...inviteForm, cedula: e.target.value })}
+                    placeholder="Ej. 001-1234567-8"
+                  />
+                </div>
+                <div>
+                  <label className="label">Parentesco</label>
+                  <input
+                    className="input"
+                    placeholder="Mamá, papá, abuela..."
+                    value={inviteForm.parentesco}
+                    onChange={(e) => setInviteForm({ ...inviteForm, parentesco: e.target.value })}
+                  />
+                </div>
+                {inviteMsg && <p className="text-sm font-bold">{inviteMsg}</p>}
+                <button disabled={inviteBusy} className="btn-primary justify-center">
+                  {inviteBusy ? 'Creando...' : 'Crear cuenta'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVincularExistente} className="flex flex-col gap-4">
+                <p className="text-sm text-ink/50">
+                  Para cuando el padre/madre ya es docente, coordinador/a, o ya tiene cuenta con otro hijo/a.
+                </p>
+                <div>
+                  <label className="label">Buscar por nombre o cédula</label>
+                  <input
+                    className="input"
+                    value={busquedaPerfil}
+                    onChange={(e) => {
+                      setBusquedaPerfil(e.target.value)
+                      setPerfilSeleccionado(null)
+                    }}
+                    placeholder="Escribe para buscar..."
+                  />
+                </div>
+                {busquedaPerfil && !perfilSeleccionado && (
+                  <div className="flex max-h-40 flex-col overflow-y-auto rounded-2xl border-2 border-ink/10">
+                    {perfilesFiltrados.map((p) => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => {
+                          setPerfilSeleccionado(p)
+                          setBusquedaPerfil(p.nombre_completo)
+                        }}
+                        className="flex items-center justify-between px-3 py-2 text-left text-sm font-bold hover:bg-sky-50"
+                      >
+                        <span>{p.nombre_completo}</span>
+                        <span className="text-xs font-normal text-ink/40">{p.role}</span>
+                      </button>
+                    ))}
+                    {perfilesFiltrados.length === 0 && (
+                      <p className="px-3 py-2 text-sm text-ink/40">Sin resultados.</p>
+                    )}
+                  </div>
+                )}
+                {perfilSeleccionado && (
+                  <div>
+                    <label className="label">Parentesco</label>
+                    <input
+                      className="input"
+                      placeholder="Mamá, papá, abuela..."
+                      value={parentescoExistente}
+                      onChange={(e) => setParentescoExistente(e.target.value)}
+                    />
+                  </div>
+                )}
+                {inviteMsg && <p className="text-sm font-bold">{inviteMsg}</p>}
+                <button disabled={inviteBusy || !perfilSeleccionado} className="btn-primary justify-center">
+                  {inviteBusy ? 'Vinculando...' : 'Vincular'}
+                </button>
+              </form>
+            )}
           </div>
-          <div>
-            <label className="label">Parentesco</label>
-            <input
-              className="input"
-              placeholder="Mamá, papá, abuela..."
-              value={inviteForm.parentesco}
-              onChange={(e) => setInviteForm({ ...inviteForm, parentesco: e.target.value })}
-            />
-          </div>
-          {inviteMsg && <p className="text-sm font-bold">{inviteMsg}</p>}
-          <button disabled={inviteBusy} className="btn-primary justify-center">
-            {inviteBusy ? 'Enviando...' : 'Enviar invitación'}
-          </button>
-        </form>
+        )}
       </Modal>
     </div>
   )
