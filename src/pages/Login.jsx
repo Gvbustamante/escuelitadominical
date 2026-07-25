@@ -25,8 +25,10 @@ export default function Login() {
       <div className="card w-full max-w-md">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <span className="text-6xl">📖</span>
-          <h1 className="text-2xl font-bold text-sky-600">Escuelita Dominical</h1>
-          <p className="text-ink/50">Ingresa con tu cuenta</p>
+          <h1 className="text-3xl uppercase text-sky-500">
+            Escuelita <span className="text-coral-500">Dominical</span>
+          </h1>
+          <p className="font-bold text-ink/50">Ingresa con tu cuenta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

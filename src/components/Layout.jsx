@@ -55,8 +55,8 @@ export default function Layout() {
       <aside className="flex w-24 flex-col items-center gap-2 border-r-4 border-sky-100 bg-white py-6 md:w-64 md:items-stretch md:px-4">
         <div className="mb-6 flex flex-col items-center gap-1 px-2 text-center">
           <span className="text-4xl">📖</span>
-          <span className="hidden font-display text-lg font-bold leading-tight text-sky-600 md:block">
-            Escuelita Dominical
+          <span className="hidden font-display text-lg font-extrabold uppercase leading-tight tracking-wide text-sky-500 md:block">
+            Escuelita <span className="text-coral-500">Dominical</span>
           </span>
         </div>
 

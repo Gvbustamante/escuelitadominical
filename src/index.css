@@ -11,13 +11,13 @@
     -webkit-tap-highlight-color: transparent;
   }
   h1, h2, h3, h4 {
-    @apply font-display;
+    @apply font-display font-extrabold tracking-tight;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-blob px-6 py-3 text-lg font-bold shadow-pop
+    @apply inline-flex items-center justify-center gap-2 rounded-blob px-6 py-3 text-lg font-extrabold uppercase tracking-wide shadow-pop
            transition-transform active:translate-y-1 active:shadow-none select-none;
   }
   .btn-primary {
