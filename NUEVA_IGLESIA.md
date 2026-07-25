@@ -63,6 +63,26 @@ Desde ahí, esa iglesia ya puede crear sus propias clases, invitar a sus docente
 
 ---
 
+## Cómo actualizar una iglesia que ya tiene su copia
+
+Cuando corriges un bug o agregas algo nuevo en tu proyecto original, cada iglesia con su propio fork necesita **dos cosas** para recibirlo (según el tipo de cambio):
+
+### 1. Cambios de código (diseño, pantallas, correcciones)
+
+En el fork de esa iglesia en GitHub, arriba del repo hay un botón **"Sync fork"** → **Update branch**. Eso trae tus últimos cambios automáticamente y el sitio se vuelve a publicar solo en 1-2 minutos. No hay que tocar nada más.
+
+### 2. Cambios de base de datos (tablas o funciones nuevas)
+
+Estos no se sincronizan solos — hay que aplicarlos a mano en el Supabase de *esa* iglesia:
+
+1. Entra al **SQL Editor** del proyecto Supabase de esa iglesia.
+2. Pega el fragmento de SQL nuevo que te compartan (solo la parte que cambió, no hace falta correr `schema.sql` de nuevo completo).
+3. **Run**.
+
+Si el cambio no tocó la base de datos (solo diseño o comportamiento), solo necesitas el paso 1.
+
+---
+
 ### Resumen rápido (si ya lo hiciste antes)
 
 1. Supabase → New Project
