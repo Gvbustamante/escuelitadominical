@@ -8,6 +8,7 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   coordinador: [
@@ -16,19 +17,24 @@ const NAV = {
     { to: '/clases', label: 'Clases', icon: '🎒' },
     { to: '/docentes', label: 'Docentes', icon: '🍎' },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
+    { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   docente: [
     { to: '/', label: 'Mis clases', icon: '🏠', end: true },
     { to: '/asistencia', label: 'Asistencia', icon: '✅' },
     { to: '/actividades', label: 'Actividades', icon: '🎨' },
+    { to: '/progreso', label: 'Progreso', icon: '🌱' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
+    { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
   padre: [
     { to: '/', label: 'Mi hijo/a', icon: '🏠', end: true },
     { to: '/actividades', label: 'Actividades', icon: '🎨' },
+    { to: '/progreso', label: 'Progreso', icon: '🌱' },
     { to: '/agenda', label: 'Agenda', icon: '📅' },
+    { to: '/devocionales', label: 'Devocionales', icon: '🙏' },
     { to: '/ayuda', label: 'Ayuda', icon: '🎓' },
   ],
 }
@@ -54,7 +60,7 @@ export default function Layout() {
           </span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-2">
+        <nav className="flex flex-1 flex-col gap-2 overflow-y-auto">
           {items.map((item) => (
             <NavLink
               key={item.to}

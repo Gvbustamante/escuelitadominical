@@ -2,6 +2,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useMisHijos } from '../../lib/useMisHijos'
 import Spinner from '../../components/Spinner'
 import { BADGE_CLASSES } from '../../lib/colors'
+import CitaDelDia from '../../components/CitaDelDia'
 
 function calcularEdad(fecha) {
   if (!fecha) return '—'
@@ -25,6 +26,8 @@ export default function PadreHome() {
         <h1 className="text-3xl font-bold">¡Hola, {profile.nombre_completo.split(' ')[0]}! 💛</h1>
         <p className="text-ink/50">Así está tu familia en la escuelita</p>
       </div>
+
+      <CitaDelDia />
 
       {hijos.length === 0 && (
         <p className="card text-ink/50">Aún no tienes niños vinculados. Habla con la docente de tu hijo/a.</p>

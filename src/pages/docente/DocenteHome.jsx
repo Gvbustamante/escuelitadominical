@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 import Spinner from '../../components/Spinner'
 import { BADGE_CLASSES } from '../../lib/colors'
+import CitaDelDia from '../../components/CitaDelDia'
 
 export default function DocenteHome() {
   const { profile, user } = useAuth()
@@ -36,6 +37,8 @@ export default function DocenteHome() {
         <h1 className="text-3xl font-bold">¡Hola, miss {profile.nombre_completo.split(' ')[0]}! 🌟</h1>
         <p className="text-ink/50">Tus clases asignadas</p>
       </div>
+
+      <CitaDelDia />
 
       {clases.length === 0 && (
         <p className="card text-ink/50">

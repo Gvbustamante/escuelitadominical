@@ -70,6 +70,12 @@ export default function PadreActividades() {
                 <span className="text-sm text-ink/40">{a.fecha}</span>
               </div>
               {a.descripcion && <p className="mt-1 text-ink/70">{a.descripcion}</p>}
+              {(a.versiculo_clave || a.historia_biblica) && (
+                <div className="mt-3 rounded-2xl bg-sunshine-50 p-3">
+                  {a.versiculo_clave && <p className="italic text-ink/80">📖 "{a.versiculo_clave}"</p>}
+                  {a.historia_biblica && <p className="mt-1 text-sm font-bold text-sunshine-700">Historia: {a.historia_biblica}</p>}
+                </div>
+              )}
               {a.actividad_archivos?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {a.actividad_archivos.map((f) => (

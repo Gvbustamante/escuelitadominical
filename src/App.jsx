@@ -6,6 +6,7 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import CompleteProfile from './pages/CompleteProfile'
 import Tutorial from './pages/Tutorial'
+import Devocionales from './pages/Devocionales'
 
 import AdminHome from './pages/admin/AdminHome'
 import Ninos from './pages/admin/Ninos'
@@ -17,10 +18,12 @@ import DocenteHome from './pages/docente/DocenteHome'
 import Asistencia from './pages/docente/Asistencia'
 import Actividades from './pages/docente/Actividades'
 import Agenda from './pages/docente/Agenda'
+import Progreso from './pages/docente/Progreso'
 
 import PadreHome from './pages/padre/PadreHome'
 import PadreActividades from './pages/padre/PadreActividades'
 import PadreAgenda from './pages/padre/PadreAgenda'
+import PadreProgreso from './pages/padre/PadreProgreso'
 
 const STAFF = ['admin', 'coordinador']
 
@@ -42,6 +45,7 @@ export default function App() {
       >
         <Route path="/" element={<RoleSwitchHome />} />
         <Route path="/ayuda" element={<Tutorial />} />
+        <Route path="/devocionales" element={<Devocionales />} />
 
         {/* Admin / coordinador */}
         <Route
@@ -94,6 +98,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/progreso"
+          element={
+            <ProtectedRoute roles={['docente', 'padre']}>
+              <RoleSwitchProgreso />
+            </ProtectedRoute>
+          }
+        />
       </Route>
     </Routes>
   )
@@ -119,4 +131,9 @@ function RoleSwitchActividades() {
 function RoleSwitchAgenda() {
   const { profile } = useAuth()
   return profile.role === 'docente' ? <Agenda /> : <PadreAgenda />
+}
+
+function RoleSwitchProgreso() {
+  const { profile } = useAuth()
+  return profile.role === 'docente' ? <Progreso /> : <PadreProgreso />
 }

@@ -54,6 +54,10 @@ function AdminGuide() {
         En <strong>Asistencia</strong> puedes ver, por fecha y por clase, quién vino cada domingo — sin tener que
         preguntarle a cada docente.
       </Step>
+      <Step number="7" icon="🙏" title="Publica devocionales para niños" color="sunshine">
+        En <strong>Devocionales</strong> puedes escribir reflexiones cortas pensadas para niños, con su versículo.
+        Todos los padres y docentes las ven.
+      </Step>
     </>
   )
 }
@@ -76,6 +80,14 @@ function DocenteGuide() {
         Ve a <strong>Agenda</strong> → <em>+ Nuevo evento</em> para avisar de un paseo, presentación o actividad especial
         próxima.
       </Step>
+      <Step number="5" icon="🌱" title="Registra el progreso de cada niño" color="coral">
+        Ve a <strong>Progreso</strong>, elige un niño y anota cómo se comportó, cómo se sintió y qué logró ese día. Los
+        padres lo ven enseguida.
+      </Step>
+      <Step number="6" icon="🙏" title="Publica un devocional" color="sunshine">
+        Ve a <strong>Devocionales</strong> → <em>+ Nuevo devocional</em> para compartir una reflexión corta con
+        versículo, pensada para niños.
+      </Step>
     </>
   )
 }
@@ -94,6 +106,15 @@ function PadreGuide() {
       </Step>
       <Step number="4" icon="📅" title="Entérate de los próximos eventos" color="grape">
         En <strong>Agenda</strong> ves paseos, presentaciones y fechas importantes de la clase de tu hijo/a.
+      </Step>
+      <Step number="5" icon="🌱" title="Mira su progreso" color="coral">
+        En <strong>Progreso</strong> ves cómo se comportó, cómo se sintió y qué logró tu hijo/a en cada clase.
+      </Step>
+      <Step number="6" icon="🙏" title="Lean juntos un devocional" color="sunshine">
+        En <strong>Devocionales</strong> hay reflexiones cortas pensadas para niños que pueden leer juntos en casa.
+      </Step>
+      <Step number="7" icon="📖" title="No te pierdas el versículo del día" color="sky">
+        En el inicio, arriba, aparece un versículo distinto cada día.
       </Step>
     </>
   )

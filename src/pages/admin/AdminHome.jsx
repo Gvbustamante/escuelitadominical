@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
 import StatCard from '../../components/StatCard'
 import Spinner from '../../components/Spinner'
+import CitaDelDia from '../../components/CitaDelDia'
 
 export default function AdminHome() {
   const { profile } = useAuth()
@@ -36,6 +37,8 @@ export default function AdminHome() {
         <h1 className="text-3xl font-bold">¡Hola, {profile.nombre_completo.split(' ')[0]}! 👋</h1>
         <p className="text-ink/50">Este es el resumen de tu escuelita hoy.</p>
       </div>
+
+      <CitaDelDia />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard icon="🧒" label="Niños activos" value={stats.ninos} color="sky" />

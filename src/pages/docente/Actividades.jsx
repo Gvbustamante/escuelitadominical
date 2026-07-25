@@ -14,7 +14,7 @@ export default function Actividades() {
   const { clases, nivelId, setNivelId } = useMisClases()
   const [actividades, setActividades] = useState(null)
   const [modalOpen, setModalOpen] = useState(false)
-  const [form, setForm] = useState({ titulo: '', descripcion: '', fecha: hoyISO() })
+  const [form, setForm] = useState({ titulo: '', descripcion: '', fecha: hoyISO(), versiculo_clave: '', historia_biblica: '' })
   const [archivos, setArchivos] = useState([])
   const [busy, setBusy] = useState(false)
   const [progreso, setProgreso] = useState('')
@@ -35,7 +35,7 @@ export default function Actividades() {
   }, [load])
 
   function openNew() {
-    setForm({ titulo: '', descripcion: '', fecha: hoyISO() })
+    setForm({ titulo: '', descripcion: '', fecha: hoyISO(), versiculo_clave: '', historia_biblica: '' })
     setArchivos([])
     setError('')
     setModalOpen(true)
@@ -48,7 +48,15 @@ export default function Actividades() {
 
     const { data: actividad, error: actError } = await supabase
       .from('actividades')
-      .insert({ nivel_id: nivelId, docente_id: user.id, titulo: form.titulo, descripcion: form.descripcion, fecha: form.fecha })
+      .insert({
+        nivel_id: nivelId,
+        docente_id: user.id,
+        titulo: form.titulo,
+        descripcion: form.descripcion,
+        fecha: form.fecha,
+        versiculo_clave: form.versiculo_clave || null,
+        historia_biblica: form.historia_biblica || null,
+      })
       .select()
       .single()
 
@@ -117,6 +125,12 @@ export default function Actividades() {
                 <span className="text-sm text-ink/40">{a.fecha}</span>
               </div>
               {a.descripcion && <p className="mt-1 text-ink/70">{a.descripcion}</p>}
+              {(a.versiculo_clave || a.historia_biblica) && (
+                <div className="mt-3 rounded-2xl bg-sunshine-50 p-3">
+                  {a.versiculo_clave && <p className="italic text-ink/80">📖 "{a.versiculo_clave}"</p>}
+                  {a.historia_biblica && <p className="mt-1 text-sm font-bold text-sunshine-700">Historia: {a.historia_biblica}</p>}
+                </div>
+              )}
               {a.actividad_archivos?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
                   {a.actividad_archivos.map((f) => (
@@ -159,6 +173,24 @@ export default function Actividades() {
           <div>
             <label className="label">Fecha</label>
             <input type="date" className="input" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} />
+          </div>
+          <div>
+            <label className="label">Versículo clave (opcional)</label>
+            <input
+              className="input"
+              placeholder='Ej. "Todo lo puedo en Cristo..." — Filipenses 4:13'
+              value={form.versiculo_clave}
+              onChange={(e) => setForm({ ...form, versiculo_clave: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label">Historia bíblica que aprendieron (opcional)</label>
+            <input
+              className="input"
+              placeholder="Ej. David y Goliat"
+              value={form.historia_biblica}
+              onChange={(e) => setForm({ ...form, historia_biblica: e.target.value })}
+            />
           </div>
           <div>
             <label className="label">Archivos (fotos, PDFs, etc.)</label>
