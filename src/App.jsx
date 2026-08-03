@@ -20,6 +20,7 @@ import ModuloDetalle from './features/modulos/pages/ModuloDetalle'
 import FinancieroAdmin from './features/financiero/pages/FinancieroAdmin'
 import MisPagos from './features/financiero/pages/MisPagos'
 import Comunicacion from './features/comunicacion/pages/Comunicacion'
+import TareasGestionList from './features/tareas_gestion/pages/TareasGestionList'
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -75,6 +76,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={STAFF}>
               <Comunicacion />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tareas-gestion"
+          element={
+            <ProtectedRoute roles={STAFF}>
+              <TareasGestionList />
             </ProtectedRoute>
           }
         />

@@ -645,6 +645,18 @@ begin
 end;
 $$;
 
+create or replace function public.puede_ver_tarea_gestion(p_tarea_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.tareas_gestion t
+    where t.id = p_tarea_id
+      and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))
+      and t.institucion_id = public.mi_institucion()
+  );
+$$;
+
 create or replace function public.es_participante(p_conversacion_id uuid)
 returns boolean
 language sql stable security definer set search_path = public
@@ -1148,7 +1160,8 @@ insert into storage.buckets (id, name, public) values
   ('certificados', 'certificados', true),
   ('mensajes-adjuntos', 'mensajes-adjuntos', false),
   ('marca', 'marca', true),
-  ('avatares', 'avatares', true)
+  ('avatares', 'avatares', true),
+  ('tareas-gestion', 'tareas-gestion', false)
 on conflict (id) do nothing;
 
 comment on table storage.objects is 'Convención de path: {institucion_id}/... — el primer segmento siempre es el institucion_id del propietario, usado por las políticas para aislar por tenant.';
@@ -1210,6 +1223,13 @@ create policy "administrador sube marca" on storage.objects for all to authentic
 create policy "usuario sube su propio avatar" on storage.objects for all to authenticated
   using (bucket_id = 'avatares' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'avatares' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- tareas-gestion: {institucion_id}/{tarea_id}/archivo — no reutiliza 'biblioteca' (escritura
+-- reservada a administrador ahí); aquí puede escribir cualquiera con acceso a la tarea.
+create policy "leer archivos de tarea de gestion storage" on storage.objects for select to authenticated
+  using (bucket_id = 'tareas-gestion' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.puede_ver_tarea_gestion(((storage.foldername(name))[2])::uuid));
+create policy "subir archivo de tarea de gestion storage" on storage.objects for insert to authenticated
+  with check (bucket_id = 'tareas-gestion' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.puede_ver_tarea_gestion(((storage.foldername(name))[2])::uuid));
 
 -- ============================================================
 -- 16. FUNCIONES DE NEGOCIO (RPC)
@@ -1445,6 +1465,8 @@ revoke all on function public.esta_matriculado(uuid) from public, anon;
 revoke all on function public.esta_matriculado_modulo(uuid) from public, anon;
 revoke all on function public.puede_gestionar_modulo(uuid) from public, anon;
 revoke all on function public.puede_conversar(uuid, uuid) from public, anon;
+revoke all on function public.puede_ver_tarea_gestion(uuid) from public, anon;
+grant execute on function public.puede_ver_tarea_gestion(uuid) to authenticated;
 revoke all on function public.es_participante(uuid) from public, anon;
 grant execute on function public.mi_institucion() to authenticated;
 grant execute on function public.mi_rol() to authenticated;
