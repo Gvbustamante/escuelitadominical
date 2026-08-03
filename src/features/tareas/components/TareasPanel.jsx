@@ -4,9 +4,13 @@ import Badge from '../../../components/ui/Badge'
 import EmptyState from '../../../components/ui/EmptyState'
 import Spinner from '../../../components/Spinner'
 import Modal from '../../../components/Modal'
-import { listarTareas, crearTarea, eliminarTarea, listarEntregas, calificarEntrega, abrirEntrega } from '../api'
+import { useAuth } from '../../../contexts/AuthContext'
+import { listarTareas, crearTarea, eliminarTarea, listarEntregas, calificarEntrega, abrirEntrega, entregarTarea } from '../api'
 
-export default function TareasPanel({ moduloId, puedeGestionar }) {
+const ESTADO_ENTREGA_TONE = { pendiente: 'neutral', entregada: 'brand', calificada: 'success', tarde: 'warning' }
+const ESTADO_ENTREGA_LABEL = { pendiente: 'Pendiente', entregada: 'Entregada', calificada: 'Calificada', tarde: 'Entregada tarde' }
+
+export default function TareasPanel({ moduloId, puedeGestionar, esEstudiante }) {
   const [tareas, setTareas] = useState(null)
   const [form, setForm] = useState(false)
   const [titulo, setTitulo] = useState('')
@@ -14,6 +18,7 @@ export default function TareasPanel({ moduloId, puedeGestionar }) {
   const [fechaLimite, setFechaLimite] = useState('')
   const [puntosMax, setPuntosMax] = useState(100)
   const [tareaAbierta, setTareaAbierta] = useState(null)
+  const [tareaEntregar, setTareaEntregar] = useState(null)
 
   async function cargar() {
     setTareas(await listarTareas(moduloId))
@@ -87,6 +92,7 @@ export default function TareasPanel({ moduloId, puedeGestionar }) {
           {tareas.map((t) => {
             const entregadas = t.tareas_academicas_entregas?.filter((e) => e.estado !== 'pendiente').length || 0
             const calificadas = t.tareas_academicas_entregas?.filter((e) => e.estado === 'calificada').length || 0
+            const miEntrega = esEstudiante ? t.tareas_academicas_entregas?.[0] : null
             return (
               <div key={t.id} className="card flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -105,6 +111,18 @@ export default function TareasPanel({ moduloId, puedeGestionar }) {
                       <Icon name="trash" className="h-4 w-4" />
                     </button>
                   )}
+                  {esEstudiante && (
+                    <>
+                      <Badge tone={ESTADO_ENTREGA_TONE[miEntrega?.estado || 'pendiente']}>
+                        {miEntrega?.calificacion != null ? `${miEntrega.calificacion}/${t.puntos_max}` : ESTADO_ENTREGA_LABEL[miEntrega?.estado || 'pendiente']}
+                      </Badge>
+                      {miEntrega?.estado !== 'calificada' && (
+                        <button className="btn-secondary !px-3 !py-1.5 text-sm" onClick={() => setTareaEntregar(t)}>
+                          {miEntrega ? 'Editar entrega' : 'Entregar'}
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             )
@@ -113,7 +131,47 @@ export default function TareasPanel({ moduloId, puedeGestionar }) {
       )}
 
       {tareaAbierta && <RevisarEntregasModal tarea={tareaAbierta} onClose={() => { setTareaAbierta(null); cargar() }} />}
+      {tareaEntregar && <EntregarTareaModal tarea={tareaEntregar} onClose={() => { setTareaEntregar(null); cargar() }} />}
     </div>
+  )
+}
+
+function EntregarTareaModal({ tarea, onClose }) {
+  const { profile } = useAuth()
+  const [comentario, setComentario] = useState('')
+  const [archivo, setArchivo] = useState(null)
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (!comentario && !archivo) return setError('Escribe un comentario o adjunta un archivo.')
+    setBusy(true)
+    try {
+      await entregarTarea({ tareaId: tarea.id, estudianteId: profile.id, institucionId: profile.institucion_id, comentario, archivo })
+      onClose()
+    } catch (err) {
+      setError(err.message)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`Entregar — ${tarea.titulo}`}>
+      {tarea.descripcion && <p className="mb-4 text-sm text-ink-soft">{tarea.descripcion}</p>}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <div>
+          <label className="label">Comentario</label>
+          <textarea className="input" rows={3} value={comentario} onChange={(e) => setComentario(e.target.value)} />
+        </div>
+        <div>
+          <label className="label">Archivo (opcional)</label>
+          <input type="file" className="input" onChange={(e) => setArchivo(e.target.files?.[0] || null)} />
+        </div>
+        {error && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm font-medium text-danger-600">{error}</p>}
+        <button disabled={busy} className="btn-primary">{busy ? 'Enviando…' : 'Entregar tarea'}</button>
+      </form>
+    </Modal>
   )
 }
 

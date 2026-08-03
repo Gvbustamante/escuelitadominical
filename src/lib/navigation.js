@@ -13,7 +13,10 @@ export const NAV_ITEMS = {
     { to: '/diplomados', label: 'Mi diplomado', icon: 'book' },
   ],
   [ROLES.DOCENTE]: [{ to: '/', label: 'Inicio', icon: 'home', end: true }],
-  [ROLES.ESTUDIANTE]: [{ to: '/', label: 'Inicio', icon: 'home', end: true }],
+  [ROLES.ESTUDIANTE]: [
+    { to: '/', label: 'Inicio', icon: 'home', end: true },
+    { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
+  ],
 }
 
 export function navFor(role) {

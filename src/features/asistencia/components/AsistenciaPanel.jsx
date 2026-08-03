@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../../components/ui/Icon'
+import Badge from '../../../components/ui/Badge'
 import EmptyState from '../../../components/ui/EmptyState'
 import Spinner from '../../../components/Spinner'
 import { listarSesiones, listarEstudiantesDelModulo, crearSesion, guardarRegistros } from '../api'
@@ -11,7 +12,10 @@ const ESTADOS = [
   { value: 'justificado', label: 'Justificado', className: 'bg-slate-100 text-ink-soft' },
 ]
 
-export default function AsistenciaPanel({ moduloId, diplomadoId, puedeGestionar }) {
+const ESTADO_TONE = { presente: 'success', tarde: 'warning', ausente: 'danger', justificado: 'neutral' }
+const ESTADO_LABEL = { presente: 'Presente', tarde: 'Tarde', ausente: 'Ausente', justificado: 'Justificado' }
+
+export default function AsistenciaPanel({ moduloId, diplomadoId, puedeGestionar, esEstudiante }) {
   const [sesiones, setSesiones] = useState(null)
   const [estudiantes, setEstudiantes] = useState([])
   const [sesionActiva, setSesionActiva] = useState(null)
@@ -20,7 +24,10 @@ export default function AsistenciaPanel({ moduloId, diplomadoId, puedeGestionar 
   const [busy, setBusy] = useState(false)
 
   async function cargar() {
-    const [s, e] = await Promise.all([listarSesiones(moduloId), listarEstudiantesDelModulo(diplomadoId)])
+    const [s, e] = await Promise.all([
+      listarSesiones(moduloId),
+      esEstudiante ? Promise.resolve([]) : listarEstudiantesDelModulo(diplomadoId),
+    ])
     setSesiones(s)
     setEstudiantes(e)
   }
@@ -58,6 +65,29 @@ export default function AsistenciaPanel({ moduloId, diplomadoId, puedeGestionar 
   }
 
   if (sesiones === null) return <Spinner />
+
+  if (esEstudiante) {
+    return sesiones.length === 0 ? (
+      <EmptyState icon="check-square" title="Sin registros de asistencia todavía" />
+    ) : (
+      <div className="card overflow-x-auto !p-0">
+        <table className="table-base">
+          <thead><tr><th>Fecha</th><th>Estado</th></tr></thead>
+          <tbody>
+            {sesiones.map((s) => {
+              const mi = s.asistencia_registros?.[0]
+              return (
+                <tr key={s.id}>
+                  <td className="font-medium text-ink">{s.fecha}</td>
+                  <td>{mi ? <Badge tone={ESTADO_TONE[mi.estado]}>{ESTADO_LABEL[mi.estado]}</Badge> : <span className="text-ink-faint">—</span>}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
 
   if (sesionActiva) {
     return (

@@ -19,6 +19,7 @@ import ModuloForm from './features/modulos/pages/ModuloForm'
 import ModuloDetalle from './features/modulos/pages/ModuloDetalle'
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
+const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
 
 export default function App() {
   const { loading } = useAuth()
@@ -53,7 +54,7 @@ export default function App() {
         <Route
           path="/diplomados"
           element={
-            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
               <DiplomadosList />
             </ProtectedRoute>
           }
@@ -77,7 +78,7 @@ export default function App() {
         <Route
           path="/diplomados/:id"
           element={
-            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
               <DiplomadoDetalle />
             </ProtectedRoute>
           }
@@ -101,7 +102,7 @@ export default function App() {
         <Route
           path="/modulos/:id"
           element={
-            <ProtectedRoute roles={STAFF}>
+            <ProtectedRoute roles={TODOS}>
               <ModuloDetalle />
             </ProtectedRoute>
           }

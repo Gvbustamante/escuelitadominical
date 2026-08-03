@@ -4,7 +4,7 @@ import Badge from '../../../components/ui/Badge'
 import Spinner from '../../../components/Spinner'
 import { listarCalificaciones, guardarCalificacion, publicarCalificacion } from '../api'
 
-export default function CalificacionesPanel({ moduloId, diplomadoId, puedeGestionar, puedePublicar }) {
+export default function CalificacionesPanel({ moduloId, diplomadoId, puedeGestionar, puedePublicar, esEstudiante }) {
   const [filas, setFilas] = useState(null)
   const [notas, setNotas] = useState({})
 
@@ -33,6 +33,18 @@ export default function CalificacionesPanel({ moduloId, diplomadoId, puedeGestio
   }
 
   if (filas === null) return <Spinner />
+
+  if (esEstudiante) {
+    const mia = filas[0]?.calificacion
+    if (!mia) return <EmptyState icon="award" title="Todavía no tienes una nota publicada en este módulo" />
+    return (
+      <div className="card flex items-center gap-4">
+        <p className="text-3xl font-semibold text-ink">{mia.nota_final}</p>
+        <Badge tone={mia.aprobado ? 'success' : 'danger'}>{mia.aprobado ? 'Aprobado' : 'Reprobado'}</Badge>
+      </div>
+    )
+  }
+
   if (filas.length === 0) return <EmptyState icon="award" title="No hay estudiantes matriculados en este diplomado" />
 
   return (

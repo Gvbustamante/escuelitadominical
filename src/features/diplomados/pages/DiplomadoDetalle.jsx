@@ -64,7 +64,7 @@ export default function DiplomadoDetalle() {
       <div className="mb-4 flex gap-2 border-b border-slate-200">
         {[
           { key: 'modulos', label: 'Módulos' },
-          { key: 'matricula', label: 'Estudiantes matriculados' },
+          ...(profile?.role !== ROLES.ESTUDIANTE ? [{ key: 'matricula', label: 'Estudiantes matriculados' }] : []),
         ].map((t) => (
           <button
             key={t.key}

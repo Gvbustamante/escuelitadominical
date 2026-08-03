@@ -16,15 +16,15 @@ import EvidenciasPanel from '../../evidencias/components/EvidenciasPanel'
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
-const TABS = [
+const TABS_BASE = [
   { key: 'resumen', label: 'Resumen' },
   { key: 'recursos', label: 'Recursos' },
   { key: 'tareas', label: 'Tareas' },
   { key: 'examenes', label: 'Exámenes' },
   { key: 'asistencia', label: 'Asistencia' },
   { key: 'calificaciones', label: 'Calificaciones' },
-  { key: 'evidencias', label: 'Evidencias' },
 ]
+const TAB_EVIDENCIAS = { key: 'evidencias', label: 'Evidencias' }
 
 export default function ModuloDetalle() {
   const { id } = useParams()
@@ -45,8 +45,10 @@ export default function ModuloDetalle() {
   const esAdmin = profile?.role === ROLES.ADMINISTRADOR
   const esLiderDeEste = profile?.role === ROLES.LIDER && diplomado.lider_id === profile.id
   const esDocenteDeEste = modulo.modulo_docentes?.some((md) => md.docente?.id === profile?.id)
+  const esEstudiante = profile?.role === ROLES.ESTUDIANTE
   const puedeGestionarLogistica = esAdmin || esLiderDeEste
   const puedeGestionarContenido = esAdmin || esLiderDeEste || esDocenteDeEste
+  const TABS = esEstudiante ? TABS_BASE : [...TABS_BASE, TAB_EVIDENCIAS]
 
   return (
     <div>
@@ -106,18 +108,19 @@ export default function ModuloDetalle() {
       )}
 
       {tab === 'recursos' && <RecursosPanel moduloId={id} puedeGestionar={puedeGestionarContenido} />}
-      {tab === 'tareas' && <TareasPanel moduloId={id} puedeGestionar={puedeGestionarContenido} />}
-      {tab === 'examenes' && <ExamenesPanel moduloId={id} puedeGestionar={puedeGestionarContenido} />}
-      {tab === 'asistencia' && <AsistenciaPanel moduloId={id} diplomadoId={diplomado.id} puedeGestionar={puedeGestionarContenido} />}
+      {tab === 'tareas' && <TareasPanel moduloId={id} puedeGestionar={puedeGestionarContenido} esEstudiante={esEstudiante} />}
+      {tab === 'examenes' && <ExamenesPanel moduloId={id} puedeGestionar={puedeGestionarContenido} esEstudiante={esEstudiante} />}
+      {tab === 'asistencia' && <AsistenciaPanel moduloId={id} diplomadoId={diplomado.id} puedeGestionar={puedeGestionarContenido} esEstudiante={esEstudiante} />}
       {tab === 'calificaciones' && (
         <CalificacionesPanel
           moduloId={id}
           diplomadoId={diplomado.id}
           puedeGestionar={puedeGestionarContenido}
           puedePublicar={esAdmin || esLiderDeEste}
+          esEstudiante={esEstudiante}
         />
       )}
-      {tab === 'evidencias' && <EvidenciasPanel moduloId={id} puedeGestionar={puedeGestionarContenido} />}
+      {!esEstudiante && tab === 'evidencias' && <EvidenciasPanel moduloId={id} puedeGestionar={puedeGestionarContenido} />}
     </div>
   )
 }

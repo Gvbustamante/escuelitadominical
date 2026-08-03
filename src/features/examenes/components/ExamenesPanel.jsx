@@ -1,12 +1,21 @@
 import { useEffect, useState } from 'react'
 import Icon from '../../../components/ui/Icon'
+import Badge from '../../../components/ui/Badge'
 import EmptyState from '../../../components/ui/EmptyState'
 import Spinner from '../../../components/Spinner'
 import { listarExamenes, crearExamen, eliminarExamen } from '../api'
 import PreguntasModal from './PreguntasModal'
 import ResultadosModal from './ResultadosModal'
+import PresentarExamenModal from './PresentarExamenModal'
 
-export default function ExamenesPanel({ moduloId, puedeGestionar }) {
+function estadoDisponibilidad(ex) {
+  const ahora = new Date()
+  if (ex.fecha_disponible_desde && ahora < new Date(ex.fecha_disponible_desde)) return 'proximo'
+  if (ex.fecha_disponible_hasta && ahora > new Date(ex.fecha_disponible_hasta)) return 'cerrado'
+  return 'disponible'
+}
+
+export default function ExamenesPanel({ moduloId, puedeGestionar, esEstudiante }) {
   const [examenes, setExamenes] = useState(null)
   const [form, setForm] = useState(false)
   const [titulo, setTitulo] = useState('')
@@ -17,6 +26,7 @@ export default function ExamenesPanel({ moduloId, puedeGestionar }) {
   const [puntosMax, setPuntosMax] = useState(100)
   const [preguntasDe, setPreguntasDe] = useState(null)
   const [resultadosDe, setResultadosDe] = useState(null)
+  const [presentarDe, setPresentarDe] = useState(null)
 
   async function cargar() {
     setExamenes(await listarExamenes(moduloId))
@@ -116,6 +126,7 @@ export default function ExamenesPanel({ moduloId, puedeGestionar }) {
                   </button>
                 </div>
               )}
+              {esEstudiante && <EstudianteAccion examen={ex} onPresentar={() => setPresentarDe(ex)} />}
             </div>
           ))}
         </div>
@@ -123,6 +134,26 @@ export default function ExamenesPanel({ moduloId, puedeGestionar }) {
 
       {preguntasDe && <PreguntasModal examen={preguntasDe} onClose={() => { setPreguntasDe(null); cargar() }} />}
       {resultadosDe && <ResultadosModal examen={resultadosDe} onClose={() => { setResultadosDe(null); cargar() }} />}
+      {presentarDe && <PresentarExamenModal examen={presentarDe} onClose={() => { setPresentarDe(null); cargar() }} />}
     </div>
+  )
+}
+
+function EstudianteAccion({ examen, onPresentar }) {
+  const disponibilidad = estadoDisponibilidad(examen)
+  const miIntento = examen.examen_intentos?.[0]
+
+  if (miIntento?.estado === 'calificado') {
+    return <Badge tone="success">{miIntento.calificacion}/{examen.puntos_max}</Badge>
+  }
+  if (miIntento?.estado === 'entregado') {
+    return <Badge tone="warning">En revisión</Badge>
+  }
+  if (disponibilidad === 'proximo') return <Badge tone="neutral">Aún no abre</Badge>
+  if (disponibilidad === 'cerrado') return <Badge tone="neutral">Cerrado</Badge>
+  return (
+    <button className="btn-primary !px-3 !py-1.5 text-sm" onClick={onPresentar}>
+      {miIntento?.estado === 'en_progreso' ? 'Continuar' : 'Presentar'}
+    </button>
   )
 }

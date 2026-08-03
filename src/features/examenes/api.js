@@ -78,6 +78,19 @@ export async function calificarRespuestaAbierta(respuestaId, puntos) {
 
 // --- Lado estudiante ---
 
+// OJO: nunca seleccionar es_correcta aquí — el estudiante está presentando el examen y esta
+// consulta viaja al cliente antes de calificar; listarPreguntas() (con es_correcta) es solo
+// para las pantallas de gestión/edición del docente.
+export async function listarPreguntasParaPresentar(examenId) {
+  const { data, error } = await supabase
+    .from('examen_preguntas')
+    .select('id, examen_id, orden, enunciado, tipo, puntos, examen_opciones(id, texto, orden)')
+    .eq('examen_id', examenId)
+    .order('orden')
+  if (error) throw error
+  return data
+}
+
 export async function iniciarIntento(examenId, estudianteId) {
   const { data, error } = await supabase
     .from('examen_intentos')
@@ -93,6 +106,15 @@ export async function iniciarIntento(examenId, estudianteId) {
     .single()
   if (e2) throw e2
   return existente
+}
+
+export async function listarMisRespuestas(intentoId) {
+  const { data, error } = await supabase
+    .from('examen_respuestas')
+    .select('pregunta_id, opcion_id, respuesta_texto')
+    .eq('intento_id', intentoId)
+  if (error) throw error
+  return data
 }
 
 export async function guardarRespuesta({ intentoId, preguntaId, opcionId, respuestaTexto }) {
