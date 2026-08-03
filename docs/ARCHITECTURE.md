@@ -73,6 +73,9 @@ Convenciones:
   componentes de `components/`.
 - Un solo `AuthContext` (sesión + perfil + institución) — no se duplica estado de auth por
   módulo.
+- Cada página de `features/*/pages` se importa en `App.jsx` con `React.lazy` (code-splitting
+  por ruta): el bundle principal solo trae el shell (auth/layout), y cada módulo de negocio se
+  descarga bajo demanda la primera vez que el usuario navega a él.
 
 ## 5. Módulos (features) del sistema
 

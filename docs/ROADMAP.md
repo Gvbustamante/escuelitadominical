@@ -33,9 +33,10 @@ integraciones externas que no se pueden asumir de forma unilateral:
 2. **Envío de correo/SMS transaccional** (confirmaciones, recordatorios de pago,
    notificaciones de mensajes). Requiere un proveedor (Resend, Twilio, etc.) y su API key.
    *(Blocked: requiere credenciales.)*
-3. **Generación de PDF de certificados en servidor** (hoy se genera en el cliente con
-   `qrcode` + `html2canvas`/print-to-PDF; para volumen alto o firmas digitales certificadas
-   conviene una Edge Function con una librería de PDF del lado servidor).
+3. **Generación de PDF de certificados en servidor** (hoy se genera una vista imprimible en
+   el cliente con QR — `qrcode` — y "Guardar como PDF" del navegador; para volumen alto o
+   firmas digitales certificadas conviene una Edge Function con una librería de PDF del lado
+   servidor).
 4. **Modo oscuro** y **panel de super-admin multi-instituto** (para el equipo que vende el
    SaaS, no para los institutos clientes) — evolución natural una vez haya más de un tenant
    real.
@@ -43,6 +44,28 @@ integraciones externas que no se pueden asumir de forma unilateral:
    Playwright). No incluidas en este MVP por foco en alcance funcional; recomendado antes de
    vender el primer contrato comercial.
 6. **Internacionalización** si se vende fuera de mercados hispanohablantes.
+7. **Code-splitting del bundle** (`vite build` avisa que el chunk principal supera 500 kB).
+   Funciona bien para el tamaño actual del equipo de un instituto; conviene dividir por ruta
+   (`React.lazy`) antes de que el catálogo de módulos crezca mucho más.
+8. **Consolidar políticas RLS permisivas duplicadas** (el linter de rendimiento de Supabase
+   marca ~30 casos de "multiple permissive policies": por diseño hay una política por rol
+   —administrador/líder/docente— en vez de una sola con todos los `OR`, priorizando
+   claridad y auditabilidad sobre el último grado de rendimiento; a considerar si el volumen
+   de escrituras concurrentes lo justifica).
+9. **Activar "Leaked Password Protection"** en Supabase Auth (Dashboard → Authentication →
+   Policies) — es un ajuste de proyecto, no de esquema, así que no se pudo aplicar por SQL.
+
+## QA final (fase 13)
+
+- `npm run build` verificado tras cada fase (sin errores).
+- Se corrió el linter de seguridad y de rendimiento de Supabase (`get_advisors`) sobre el
+  proyecto real al cierre del proyecto: se agregaron los 72 índices faltantes en columnas de
+  llave foránea y se reescribieron las ~40 políticas RLS que reevaluaban `auth.uid()` por fila
+  (ahora `(select auth.uid())`, cacheado una vez por consulta). Quedan como aceptados y
+  documentados arriba: "multiple permissive policies" (decisión de diseño) e "índices sin uso"
+  (esperado: son nuevos y la base todavía no tiene tráfico real).
+- Revisión responsive manual del layout (sidebar/tablet/tab-bar móvil) y del overflow de
+  navegación en el menú "Más" al crecer a 7 ítems para administrador.
 
 ## Cómo se ejecutó este roadmap
 

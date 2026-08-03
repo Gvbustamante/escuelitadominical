@@ -797,7 +797,7 @@ create policy "administrador edita su institucion" on public.instituciones for u
 -- diplomados matriculados).
 create policy "leer perfiles relacionados" on public.profiles for select to authenticated
   using (
-    auth.uid() = id
+    (select auth.uid()) = id
     or public.es_administrador()
     or (institucion_id = public.mi_institucion() and role = 'administrador')
     or (
@@ -814,13 +814,13 @@ create policy "leer perfiles relacionados" on public.profiles for select to auth
           select 1 from public.modulos m
           join public.diplomados d on d.id = m.diplomado_id
           join public.modulo_docentes md on md.modulo_id = m.id
-          where md.docente_id = auth.uid() and d.lider_id = profiles.id
+          where md.docente_id = (select auth.uid()) and d.lider_id = profiles.id
         )
         or exists (
           select 1 from public.modulo_docentes md
           join public.modulos m on m.id = md.modulo_id
           join public.matriculas mt on mt.diplomado_id = m.diplomado_id
-          where md.docente_id = auth.uid() and mt.estudiante_id = profiles.id
+          where md.docente_id = (select auth.uid()) and mt.estudiante_id = profiles.id
         )
       )
     )
@@ -829,20 +829,20 @@ create policy "leer perfiles relacionados" on public.profiles for select to auth
         exists (
           select 1 from public.matriculas mt
           join public.diplomados d on d.id = mt.diplomado_id
-          where mt.estudiante_id = auth.uid() and d.lider_id = profiles.id
+          where mt.estudiante_id = (select auth.uid()) and d.lider_id = profiles.id
         )
         or exists (
           select 1 from public.matriculas mt
           join public.modulos m on m.diplomado_id = mt.diplomado_id
           join public.modulo_docentes md on md.modulo_id = m.id
-          where mt.estudiante_id = auth.uid() and md.docente_id = profiles.id
+          where mt.estudiante_id = (select auth.uid()) and md.docente_id = profiles.id
         )
       )
     )
   );
 create policy "actualizar perfiles" on public.profiles for update to authenticated
-  using (auth.uid() = id or (institucion_id = public.mi_institucion() and public.es_administrador()))
-  with check (auth.uid() = id or (institucion_id = public.mi_institucion() and public.es_administrador()));
+  using ((select auth.uid()) = id or (institucion_id = public.mi_institucion() and public.es_administrador()))
+  with check ((select auth.uid()) = id or (institucion_id = public.mi_institucion() and public.es_administrador()));
 
 -- DIPLOMADOS
 create policy "leer diplomados de mi institucion" on public.diplomados for select to authenticated
@@ -858,8 +858,8 @@ create policy "administrador gestiona diplomados" on public.diplomados for all t
   using (institucion_id = public.mi_institucion() and public.es_administrador())
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
 create policy "lider edita su diplomado" on public.diplomados for update to authenticated
-  using (lider_id = auth.uid())
-  with check (lider_id = auth.uid());
+  using (lider_id = (select auth.uid()))
+  with check (lider_id = (select auth.uid()));
 
 -- MODULOS
 create policy "leer modulos accesibles" on public.modulos for select to authenticated
@@ -892,7 +892,7 @@ create policy "administrador y lider asignan docentes" on public.modulo_docentes
 -- MATRICULAS
 create policy "leer matriculas accesibles" on public.matriculas for select to authenticated
   using (
-    estudiante_id = auth.uid()
+    estudiante_id = (select auth.uid())
     or public.mi_rol() = 'administrador'
     or public.es_lider_de_diplomado(diplomado_id)
   );
@@ -915,14 +915,14 @@ create policy "gestionar tareas de mi modulo" on public.tareas_academicas for al
 -- TAREAS_ACADEMICAS_ENTREGAS
 create policy "leer entregas accesibles" on public.tareas_academicas_entregas for select to authenticated
   using (
-    estudiante_id = auth.uid()
+    estudiante_id = (select auth.uid())
     or exists (select 1 from public.tareas_academicas t where t.id = tareas_academicas_entregas.tarea_id and public.puede_gestionar_modulo(t.modulo_id))
   );
 create policy "estudiante entrega su propia tarea" on public.tareas_academicas_entregas for insert to authenticated
-  with check (estudiante_id = auth.uid() and exists (select 1 from public.tareas_academicas t where t.id = tarea_id and public.esta_matriculado_modulo(t.modulo_id)));
+  with check (estudiante_id = (select auth.uid()) and exists (select 1 from public.tareas_academicas t where t.id = tarea_id and public.esta_matriculado_modulo(t.modulo_id)));
 create policy "estudiante actualiza su entrega antes de calificar" on public.tareas_academicas_entregas for update to authenticated
-  using (estudiante_id = auth.uid() and estado <> 'calificada')
-  with check (estudiante_id = auth.uid());
+  using (estudiante_id = (select auth.uid()) and estado <> 'calificada')
+  with check (estudiante_id = (select auth.uid()));
 create policy "docente/lider/admin califica entregas" on public.tareas_academicas_entregas for update to authenticated
   using (exists (select 1 from public.tareas_academicas t where t.id = tareas_academicas_entregas.tarea_id and public.puede_gestionar_modulo(t.modulo_id)));
 
@@ -950,24 +950,24 @@ create policy "gestionar opciones de mi examen" on public.examen_opciones for al
 
 -- EXAMEN_INTENTOS
 create policy "leer intentos accesibles" on public.examen_intentos for select to authenticated
-  using (estudiante_id = auth.uid() or exists (select 1 from public.examenes e where e.id = examen_intentos.examen_id and public.puede_gestionar_modulo(e.modulo_id)));
+  using (estudiante_id = (select auth.uid()) or exists (select 1 from public.examenes e where e.id = examen_intentos.examen_id and public.puede_gestionar_modulo(e.modulo_id)));
 create policy "estudiante inicia su propio intento" on public.examen_intentos for insert to authenticated
-  with check (estudiante_id = auth.uid() and exists (select 1 from public.examenes e where e.id = examen_id and public.esta_matriculado_modulo(e.modulo_id)));
+  with check (estudiante_id = (select auth.uid()) and exists (select 1 from public.examenes e where e.id = examen_id and public.esta_matriculado_modulo(e.modulo_id)));
 create policy "estudiante entrega su propio intento" on public.examen_intentos for update to authenticated
-  using (estudiante_id = auth.uid() and estado = 'en_progreso')
-  with check (estudiante_id = auth.uid());
+  using (estudiante_id = (select auth.uid()) and estado = 'en_progreso')
+  with check (estudiante_id = (select auth.uid()));
 create policy "docente califica preguntas abiertas" on public.examen_intentos for update to authenticated
   using (exists (select 1 from public.examenes e where e.id = examen_intentos.examen_id and public.puede_gestionar_modulo(e.modulo_id)));
 
 -- EXAMEN_RESPUESTAS
 create policy "leer respuestas accesibles" on public.examen_respuestas for select to authenticated
   using (
-    exists (select 1 from public.examen_intentos i where i.id = examen_respuestas.intento_id and i.estudiante_id = auth.uid())
+    exists (select 1 from public.examen_intentos i where i.id = examen_respuestas.intento_id and i.estudiante_id = (select auth.uid()))
     or exists (select 1 from public.examen_intentos i join public.examenes e on e.id = i.examen_id where i.id = examen_respuestas.intento_id and public.puede_gestionar_modulo(e.modulo_id))
   );
 create policy "estudiante responde su propio intento" on public.examen_respuestas for all to authenticated
-  using (exists (select 1 from public.examen_intentos i where i.id = examen_respuestas.intento_id and i.estudiante_id = auth.uid() and i.estado = 'en_progreso'))
-  with check (exists (select 1 from public.examen_intentos i where i.id = intento_id and i.estudiante_id = auth.uid() and i.estado = 'en_progreso'));
+  using (exists (select 1 from public.examen_intentos i where i.id = examen_respuestas.intento_id and i.estudiante_id = (select auth.uid()) and i.estado = 'en_progreso'))
+  with check (exists (select 1 from public.examen_intentos i where i.id = intento_id and i.estudiante_id = (select auth.uid()) and i.estado = 'en_progreso'));
 create policy "docente califica respuestas abiertas" on public.examen_respuestas for update to authenticated
   using (exists (select 1 from public.examen_intentos i join public.examenes e on e.id = i.examen_id where i.id = examen_respuestas.intento_id and public.puede_gestionar_modulo(e.modulo_id)));
 
@@ -979,7 +979,7 @@ create policy "gestionar sesiones de mi modulo" on public.asistencia_sesiones fo
 
 create policy "leer registros de asistencia accesibles" on public.asistencia_registros for select to authenticated
   using (
-    estudiante_id = auth.uid()
+    estudiante_id = (select auth.uid())
     or exists (select 1 from public.asistencia_sesiones s where s.id = asistencia_registros.sesion_id and public.puede_gestionar_modulo(s.modulo_id))
   );
 create policy "gestionar registros de mi modulo" on public.asistencia_registros for all to authenticated
@@ -989,7 +989,7 @@ create policy "gestionar registros de mi modulo" on public.asistencia_registros 
 -- CALIFICACIONES_MODULO
 create policy "leer calificaciones accesibles" on public.calificaciones_modulo for select to authenticated
   using (
-    (estudiante_id = auth.uid() and publicada)
+    (estudiante_id = (select auth.uid()) and publicada)
     or public.puede_gestionar_modulo(modulo_id)
   );
 create policy "gestionar calificaciones de mi modulo" on public.calificaciones_modulo for all to authenticated
@@ -1001,14 +1001,14 @@ create policy "leer foro de modulo accesible" on public.foro_temas for select to
 create policy "crear tema de foro" on public.foro_temas for insert to authenticated
   with check (public.puede_gestionar_modulo(modulo_id) or public.esta_matriculado_modulo(modulo_id));
 create policy "borrar tema propio o staff" on public.foro_temas for delete to authenticated
-  using (creado_por = auth.uid() or public.puede_gestionar_modulo(modulo_id));
+  using (creado_por = (select auth.uid()) or public.puede_gestionar_modulo(modulo_id));
 
 create policy "leer mensajes de foro accesibles" on public.foro_mensajes for select to authenticated
   using (exists (select 1 from public.foro_temas t where t.id = foro_mensajes.tema_id and (public.puede_gestionar_modulo(t.modulo_id) or public.esta_matriculado_modulo(t.modulo_id))));
 create policy "crear mensaje de foro" on public.foro_mensajes for insert to authenticated
-  with check (autor_id = auth.uid() and exists (select 1 from public.foro_temas t where t.id = tema_id and (public.puede_gestionar_modulo(t.modulo_id) or public.esta_matriculado_modulo(t.modulo_id))));
+  with check (autor_id = (select auth.uid()) and exists (select 1 from public.foro_temas t where t.id = tema_id and (public.puede_gestionar_modulo(t.modulo_id) or public.esta_matriculado_modulo(t.modulo_id))));
 create policy "borrar mensaje de foro propio o staff" on public.foro_mensajes for delete to authenticated
-  using (autor_id = auth.uid() or exists (select 1 from public.foro_temas t where t.id = foro_mensajes.tema_id and public.puede_gestionar_modulo(t.modulo_id)));
+  using (autor_id = (select auth.uid()) or exists (select 1 from public.foro_temas t where t.id = foro_mensajes.tema_id and public.puede_gestionar_modulo(t.modulo_id)));
 
 -- DEVOCIONALES / PETICIONES
 create policy "leer devocionales de mi institucion" on public.devocionales for select to authenticated
@@ -1020,14 +1020,14 @@ create policy "staff gestiona devocionales" on public.devocionales for all to au
 create policy "leer peticiones visibles" on public.peticiones_oracion for select to authenticated
   using (
     institucion_id = public.mi_institucion()
-    and (privado = false or autor_id = auth.uid() or public.mi_rol() in ('administrador','lider','docente'))
+    and (privado = false or autor_id = (select auth.uid()) or public.mi_rol() in ('administrador','lider','docente'))
   );
 create policy "crear peticion propia" on public.peticiones_oracion for insert to authenticated
-  with check (autor_id = auth.uid() and institucion_id = public.mi_institucion());
+  with check (autor_id = (select auth.uid()) and institucion_id = public.mi_institucion());
 create policy "actualizar o borrar peticion propia o staff" on public.peticiones_oracion for update to authenticated
-  using (autor_id = auth.uid() or public.mi_rol() in ('administrador','lider'));
+  using (autor_id = (select auth.uid()) or public.mi_rol() in ('administrador','lider'));
 create policy "borrar peticion propia o staff" on public.peticiones_oracion for delete to authenticated
-  using (autor_id = auth.uid() or public.mi_rol() in ('administrador','lider'));
+  using (autor_id = (select auth.uid()) or public.mi_rol() in ('administrador','lider'));
 
 -- EVIDENCIAS_CLASE
 create policy "leer evidencias de mi modulo" on public.evidencias_clase for select to authenticated
@@ -1044,11 +1044,11 @@ create policy "administrador gestiona conceptos de pago" on public.conceptos_pag
 
 create policy "leer pagos accesibles" on public.pagos for select to authenticated
   using (
-    estudiante_id = auth.uid()
+    estudiante_id = (select auth.uid())
     or (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider'))
   );
 create policy "estudiante registra su propio pago" on public.pagos for insert to authenticated
-  with check (estudiante_id = auth.uid() and institucion_id = public.mi_institucion());
+  with check (estudiante_id = (select auth.uid()) and institucion_id = public.mi_institucion());
 create policy "administrador gestiona pagos" on public.pagos for all to authenticated
   using (institucion_id = public.mi_institucion() and public.es_administrador())
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
@@ -1063,59 +1063,59 @@ create policy "administrador gestiona ofrendas" on public.ofrendas for all to au
 create policy "leer mis conversaciones" on public.conversaciones for select to authenticated
   using (public.es_participante(id));
 create policy "crear conversacion" on public.conversaciones for insert to authenticated
-  with check (institucion_id = public.mi_institucion() and created_by = auth.uid());
+  with check (institucion_id = public.mi_institucion() and created_by = (select auth.uid()));
 
 create policy "leer participantes de mis conversaciones" on public.conversacion_participantes for select to authenticated
   using (public.es_participante(conversacion_id));
 create policy "agregar participantes validos" on public.conversacion_participantes for insert to authenticated
   with check (
-    exists (select 1 from public.conversaciones c where c.id = conversacion_id and c.created_by = auth.uid())
-    and public.puede_conversar(auth.uid(), profile_id)
+    exists (select 1 from public.conversaciones c where c.id = conversacion_id and c.created_by = (select auth.uid()))
+    and public.puede_conversar((select auth.uid()), profile_id)
   );
 create policy "salir de una conversacion" on public.conversacion_participantes for delete to authenticated
-  using (profile_id = auth.uid());
+  using (profile_id = (select auth.uid()));
 
 create policy "leer mensajes de mis conversaciones" on public.mensajes for select to authenticated
   using (public.es_participante(conversacion_id));
 create policy "enviar mensaje en mi conversacion" on public.mensajes for insert to authenticated
-  with check (autor_id = auth.uid() and public.es_participante(conversacion_id));
+  with check (autor_id = (select auth.uid()) and public.es_participante(conversacion_id));
 create policy "editar o fijar mensaje propio o admin" on public.mensajes for update to authenticated
-  using (autor_id = auth.uid() or (public.es_participante(conversacion_id) and public.mi_rol() = 'administrador'));
+  using (autor_id = (select auth.uid()) or (public.es_participante(conversacion_id) and public.mi_rol() = 'administrador'));
 
 create policy "leer adjuntos de mis conversaciones" on public.mensaje_adjuntos for select to authenticated
   using (exists (select 1 from public.mensajes m where m.id = mensaje_adjuntos.mensaje_id and public.es_participante(m.conversacion_id)));
 create policy "adjuntar archivo a mensaje propio" on public.mensaje_adjuntos for insert to authenticated
-  with check (exists (select 1 from public.mensajes m where m.id = mensaje_id and m.autor_id = auth.uid()));
+  with check (exists (select 1 from public.mensajes m where m.id = mensaje_id and m.autor_id = (select auth.uid())));
 
 create policy "leer lecturas de mis conversaciones" on public.mensaje_lecturas for select to authenticated
   using (exists (select 1 from public.mensajes m where m.id = mensaje_lecturas.mensaje_id and public.es_participante(m.conversacion_id)));
 create policy "marcar mensaje como leido" on public.mensaje_lecturas for insert to authenticated
-  with check (profile_id = auth.uid() and exists (select 1 from public.mensajes m where m.id = mensaje_id and public.es_participante(m.conversacion_id)));
+  with check (profile_id = (select auth.uid()) and exists (select 1 from public.mensajes m where m.id = mensaje_id and public.es_participante(m.conversacion_id)));
 
 -- TAREAS DE GESTIÓN
 create policy "leer tareas de gestion accesibles" on public.tareas_gestion for select to authenticated
-  using (institucion_id = public.mi_institucion() and (responsable_id = auth.uid() or asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider')));
+  using (institucion_id = public.mi_institucion() and (responsable_id = (select auth.uid()) or asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider')));
 create policy "administrador y lider asignan tareas de gestion" on public.tareas_gestion for insert to authenticated
-  with check (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider') and asignado_por = auth.uid());
+  with check (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider') and asignado_por = (select auth.uid()));
 create policy "actualizar tarea de gestion" on public.tareas_gestion for update to authenticated
-  using (responsable_id = auth.uid() or asignado_por = auth.uid() or public.mi_rol() = 'administrador');
+  using (responsable_id = (select auth.uid()) or asignado_por = (select auth.uid()) or public.mi_rol() = 'administrador');
 create policy "administrador elimina tareas de gestion" on public.tareas_gestion for delete to authenticated
   using (public.mi_rol() = 'administrador' and institucion_id = public.mi_institucion());
 
 create policy "leer archivos de tarea de gestion accesible" on public.tareas_gestion_archivos for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_archivos.tarea_id and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))));
+  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_archivos.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
 create policy "adjuntar archivo a tarea de gestion accesible" on public.tareas_gestion_archivos for insert to authenticated
-  with check (subido_por = auth.uid() and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))));
+  with check (subido_por = (select auth.uid()) and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
 
 create policy "leer comentarios de tarea de gestion accesible" on public.tareas_gestion_comentarios for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_comentarios.tarea_id and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))));
+  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_comentarios.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
 create policy "comentar tarea de gestion accesible" on public.tareas_gestion_comentarios for insert to authenticated
-  with check (autor_id = auth.uid() and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))));
+  with check (autor_id = (select auth.uid()) and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
 
 create policy "leer historial de tarea de gestion accesible" on public.tareas_gestion_historial for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_historial.tarea_id and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))));
+  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_historial.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
 create policy "insertar historial de tarea de gestion" on public.tareas_gestion_historial for insert to authenticated
-  with check (cambiado_por = auth.uid());
+  with check (cambiado_por = (select auth.uid()));
 
 -- BIBLIOTECA
 create policy "leer biblioteca de mi institucion" on public.biblioteca_categorias for select to authenticated
@@ -1138,7 +1138,7 @@ create policy "administrador gestiona plantillas de certificado" on public.plant
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
 
 create policy "leer certificados accesibles" on public.certificados for select to authenticated
-  using (estudiante_id = auth.uid() or (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider')));
+  using (estudiante_id = (select auth.uid()) or (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider')));
 create policy "administrador emite certificados" on public.certificados for all to authenticated
   using (institucion_id = public.mi_institucion() and public.es_administrador())
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
@@ -1491,3 +1491,84 @@ revoke all on function public.emitir_certificado(uuid, uuid, uuid) from public, 
 grant execute on function public.emitir_certificado(uuid, uuid, uuid) to authenticated;
 revoke all on function public.calificar_respuesta_abierta(uuid, numeric) from public, anon;
 grant execute on function public.calificar_respuesta_abierta(uuid, numeric) to authenticated;
+
+-- ============================================================
+-- 18. ÍNDICES DE RENDIMIENTO
+-- ============================================================
+-- Postgres no indexa automáticamente las columnas de llave foránea. Con RLS evaluando
+-- EXISTS/joins sobre estas columnas en casi cada consulta (mi_institucion, puede_gestionar_modulo,
+-- es_lider_de_diplomado, etc.), dejarlas sin índice degrada el rendimiento a medida que crecen
+-- las tablas. Detectado por el linter de rendimiento de Supabase tras completar el esquema.
+
+create index if not exists idx_asistencia_registros_estudiante_id on public.asistencia_registros(estudiante_id);
+create index if not exists idx_asistencia_sesiones_tomada_por on public.asistencia_sesiones(tomada_por);
+create index if not exists idx_auditoria_actor_id on public.auditoria(actor_id);
+create index if not exists idx_auditoria_institucion_id on public.auditoria(institucion_id);
+create index if not exists idx_biblioteca_categorias_institucion_id on public.biblioteca_categorias(institucion_id);
+create index if not exists idx_biblioteca_recursos_categoria_id on public.biblioteca_recursos(categoria_id);
+create index if not exists idx_biblioteca_recursos_institucion_id on public.biblioteca_recursos(institucion_id);
+create index if not exists idx_biblioteca_recursos_subido_por on public.biblioteca_recursos(subido_por);
+create index if not exists idx_calificaciones_modulo_calculada_por on public.calificaciones_modulo(calculada_por);
+create index if not exists idx_calificaciones_modulo_estudiante_id on public.calificaciones_modulo(estudiante_id);
+create index if not exists idx_certificados_diplomado_id on public.certificados(diplomado_id);
+create index if not exists idx_certificados_emitido_por on public.certificados(emitido_por);
+create index if not exists idx_certificados_institucion_id on public.certificados(institucion_id);
+create index if not exists idx_certificados_plantilla_id on public.certificados(plantilla_id);
+create index if not exists idx_conceptos_pago_diplomado_id on public.conceptos_pago(diplomado_id);
+create index if not exists idx_conceptos_pago_institucion_id on public.conceptos_pago(institucion_id);
+create index if not exists idx_conceptos_pago_modulo_id on public.conceptos_pago(modulo_id);
+create index if not exists idx_conversacion_participantes_profile_id on public.conversacion_participantes(profile_id);
+create index if not exists idx_conversaciones_created_by on public.conversaciones(created_by);
+create index if not exists idx_conversaciones_institucion_id on public.conversaciones(institucion_id);
+create index if not exists idx_devocionales_creado_por on public.devocionales(creado_por);
+create index if not exists idx_devocionales_institucion_id on public.devocionales(institucion_id);
+create index if not exists idx_devocionales_modulo_id on public.devocionales(modulo_id);
+create index if not exists idx_diplomados_created_by on public.diplomados(created_by);
+create index if not exists idx_diplomados_institucion_id on public.diplomados(institucion_id);
+create index if not exists idx_evidencias_clase_docente_id on public.evidencias_clase(docente_id);
+create index if not exists idx_evidencias_clase_modulo_id on public.evidencias_clase(modulo_id);
+create index if not exists idx_examen_intentos_estudiante_id on public.examen_intentos(estudiante_id);
+create index if not exists idx_examen_opciones_pregunta_id on public.examen_opciones(pregunta_id);
+create index if not exists idx_examen_preguntas_examen_id on public.examen_preguntas(examen_id);
+create index if not exists idx_examen_respuestas_opcion_id on public.examen_respuestas(opcion_id);
+create index if not exists idx_examen_respuestas_pregunta_id on public.examen_respuestas(pregunta_id);
+create index if not exists idx_examenes_creado_por on public.examenes(creado_por);
+create index if not exists idx_examenes_modulo_id on public.examenes(modulo_id);
+create index if not exists idx_foro_mensajes_autor_id on public.foro_mensajes(autor_id);
+create index if not exists idx_foro_mensajes_tema_id on public.foro_mensajes(tema_id);
+create index if not exists idx_foro_temas_creado_por on public.foro_temas(creado_por);
+create index if not exists idx_foro_temas_modulo_id on public.foro_temas(modulo_id);
+create index if not exists idx_matriculas_estudiante_id on public.matriculas(estudiante_id);
+create index if not exists idx_mensaje_adjuntos_mensaje_id on public.mensaje_adjuntos(mensaje_id);
+create index if not exists idx_mensaje_lecturas_profile_id on public.mensaje_lecturas(profile_id);
+create index if not exists idx_mensajes_autor_id on public.mensajes(autor_id);
+create index if not exists idx_mensajes_conversacion_id on public.mensajes(conversacion_id);
+create index if not exists idx_modulo_docentes_docente_id on public.modulo_docentes(docente_id);
+create index if not exists idx_modulos_diplomado_id on public.modulos(diplomado_id);
+create index if not exists idx_ofrendas_donante_id on public.ofrendas(donante_id);
+create index if not exists idx_ofrendas_institucion_id on public.ofrendas(institucion_id);
+create index if not exists idx_ofrendas_registrado_por on public.ofrendas(registrado_por);
+create index if not exists idx_pagos_aprobado_por on public.pagos(aprobado_por);
+create index if not exists idx_pagos_concepto_id on public.pagos(concepto_id);
+create index if not exists idx_pagos_created_by on public.pagos(created_by);
+create index if not exists idx_pagos_estudiante_id on public.pagos(estudiante_id);
+create index if not exists idx_pagos_institucion_id on public.pagos(institucion_id);
+create index if not exists idx_peticiones_oracion_autor_id on public.peticiones_oracion(autor_id);
+create index if not exists idx_peticiones_oracion_institucion_id on public.peticiones_oracion(institucion_id);
+create index if not exists idx_peticiones_oracion_modulo_id on public.peticiones_oracion(modulo_id);
+create index if not exists idx_plantillas_certificado_institucion_id on public.plantillas_certificado(institucion_id);
+create index if not exists idx_recursos_modulo_modulo_id on public.recursos_modulo(modulo_id);
+create index if not exists idx_recursos_modulo_subido_por on public.recursos_modulo(subido_por);
+create index if not exists idx_tareas_academicas_creado_por on public.tareas_academicas(creado_por);
+create index if not exists idx_tareas_academicas_modulo_id on public.tareas_academicas(modulo_id);
+create index if not exists idx_tareas_academicas_entregas_calificado_por on public.tareas_academicas_entregas(calificado_por);
+create index if not exists idx_tareas_academicas_entregas_estudiante_id on public.tareas_academicas_entregas(estudiante_id);
+create index if not exists idx_tareas_gestion_asignado_por on public.tareas_gestion(asignado_por);
+create index if not exists idx_tareas_gestion_institucion_id on public.tareas_gestion(institucion_id);
+create index if not exists idx_tareas_gestion_responsable_id on public.tareas_gestion(responsable_id);
+create index if not exists idx_tareas_gestion_archivos_subido_por on public.tareas_gestion_archivos(subido_por);
+create index if not exists idx_tareas_gestion_archivos_tarea_id on public.tareas_gestion_archivos(tarea_id);
+create index if not exists idx_tareas_gestion_comentarios_autor_id on public.tareas_gestion_comentarios(autor_id);
+create index if not exists idx_tareas_gestion_comentarios_tarea_id on public.tareas_gestion_comentarios(tarea_id);
+create index if not exists idx_tareas_gestion_historial_cambiado_por on public.tareas_gestion_historial(cambiado_por);
+create index if not exists idx_tareas_gestion_historial_tarea_id on public.tareas_gestion_historial(tarea_id);
