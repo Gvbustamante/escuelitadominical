@@ -1385,6 +1385,48 @@ begin
 end;
 $$;
 
+-- Recalificación manual de una respuesta abierta: actualiza la respuesta y recompone la
+-- calificación/estado del intento en una sola transacción (evita tener esta lógica
+-- duplicada en el cliente).
+create or replace function public.calificar_respuesta_abierta(p_respuesta_id uuid, p_puntos numeric)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_intento_id uuid;
+  v_modulo_id uuid;
+  v_total numeric;
+  v_pendiente boolean;
+begin
+  select er.intento_id, e.modulo_id into v_intento_id, v_modulo_id
+  from public.examen_respuestas er
+  join public.examen_intentos i on i.id = er.intento_id
+  join public.examenes e on e.id = i.examen_id
+  where er.id = p_respuesta_id;
+
+  if v_intento_id is null or not public.puede_gestionar_modulo(v_modulo_id) then
+    raise exception 'No autorizado';
+  end if;
+
+  update public.examen_respuestas set puntos_obtenidos = p_puntos where id = p_respuesta_id;
+
+  select coalesce(sum(puntos_obtenidos), 0),
+         bool_or(eq.tipo = 'abierta' and er.puntos_obtenidos is null)
+    into v_total, v_pendiente
+  from public.examen_respuestas er
+  join public.examen_preguntas eq on eq.id = er.pregunta_id
+  where er.intento_id = v_intento_id;
+
+  update public.examen_intentos
+  set calificacion = v_total,
+      requiere_revision_manual = coalesce(v_pendiente, false),
+      estado = case when v_pendiente then 'entregado' else 'calificado' end
+  where id = v_intento_id;
+end;
+$$;
+
 -- ============================================================
 -- 17. ENDURECIMIENTO DE PERMISOS DE EJECUCIÓN
 -- ============================================================
@@ -1425,3 +1467,5 @@ revoke all on function public.aprobar_pago(uuid, boolean, text) from public, ano
 grant execute on function public.aprobar_pago(uuid, boolean, text) to authenticated;
 revoke all on function public.emitir_certificado(uuid, uuid, uuid) from public, anon;
 grant execute on function public.emitir_certificado(uuid, uuid, uuid) to authenticated;
+revoke all on function public.calificar_respuesta_abierta(uuid, numeric) from public, anon;
+grant execute on function public.calificar_respuesta_abierta(uuid, numeric) to authenticated;
