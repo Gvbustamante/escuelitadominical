@@ -42,6 +42,23 @@ aislados por `institucion_id` y RLS (ver `docs/DATA_MODEL.md`).
 
 ## Despliegue
 
+### Netlify
+
+El repo incluye `netlify.toml` (build command `npm run build`, publish `dist`). Al importar el
+repo en Netlify (Add new site → Import an existing project → tu repo de GitHub):
+
+1. Netlify detecta `netlify.toml` automáticamente — no hace falta tocar el build command ni el
+   publish directory.
+2. En **Site configuration → Environment variables**, agrega `VITE_SUPABASE_URL` y
+   `VITE_SUPABASE_ANON_KEY` (los mismos valores de tu `.env.local`). Sin esto la app carga en
+   blanco o muestra "Falta configuración", porque Vite necesita esas variables **en tiempo de
+   build**, no solo en runtime.
+3. Cualquier cambio en las variables de entorno requiere un **nuevo deploy** (Deploys → Trigger
+   deploy → Clear cache and deploy site) para que el build las tome.
+4. La app usa `HashRouter` (rutas `#/...`), así que no se necesitan reglas de redirect para SPA.
+
+### GitHub Pages
+
 Cada push a `main` despliega automáticamente a GitHub Pages vía GitHub Actions
 (`.github/workflows/deploy.yml`). Requiere los secrets `VITE_SUPABASE_URL` y
 `VITE_SUPABASE_ANON_KEY` configurados en **Settings → Secrets and variables → Actions**, y
