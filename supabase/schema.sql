@@ -777,8 +777,57 @@ create policy "administrador edita su institucion" on public.instituciones for u
 -- No existe política de INSERT para el rol authenticated: toda creación de perfil pasa por
 -- public.crear_usuario_invitado (security definer) o por supabase/primer_admin.sql (superusuario),
 -- nunca por una inserción directa del cliente — evita que un usuario se autoasigne rol/institución.
-create policy "leer perfiles de mi institucion" on public.profiles for select to authenticated
-  using (institucion_id = public.mi_institucion());
+--
+-- La visibilidad de perfiles NO es "todo el tenant": documento_identidad es un dato personal
+-- sensible, así que cada rol solo ve su propio perfil, a los administradores (contacto
+-- institucional) y sus relaciones académicas reales (líder↔docentes/estudiantes de su
+-- diplomado, docente↔líder/estudiantes de sus módulos, estudiante↔líder/docentes de sus
+-- diplomados matriculados).
+create policy "leer perfiles relacionados" on public.profiles for select to authenticated
+  using (
+    auth.uid() = id
+    or public.es_administrador()
+    or (institucion_id = public.mi_institucion() and role = 'administrador')
+    or (
+      -- El líder necesita poder buscar docentes/estudiantes de su institución para
+      -- asignarlos a módulos o matricularlos, no solo ver a los ya asignados (si no, el
+      -- flujo "crear docente -> asignarlo" sería un problema de huevo-y-gallina). La capa
+      -- de aplicación solo debe pedir id/nombre_completo/role en pantallas de selección,
+      -- nunca documento_identidad, para un líder.
+      public.mi_rol() = 'lider' and institucion_id = public.mi_institucion() and role in ('docente','estudiante')
+    )
+    or (
+      public.mi_rol() = 'docente' and institucion_id = public.mi_institucion() and (
+        exists (
+          select 1 from public.modulos m
+          join public.diplomados d on d.id = m.diplomado_id
+          join public.modulo_docentes md on md.modulo_id = m.id
+          where md.docente_id = auth.uid() and d.lider_id = profiles.id
+        )
+        or exists (
+          select 1 from public.modulo_docentes md
+          join public.modulos m on m.id = md.modulo_id
+          join public.matriculas mt on mt.diplomado_id = m.diplomado_id
+          where md.docente_id = auth.uid() and mt.estudiante_id = profiles.id
+        )
+      )
+    )
+    or (
+      public.mi_rol() = 'estudiante' and institucion_id = public.mi_institucion() and (
+        exists (
+          select 1 from public.matriculas mt
+          join public.diplomados d on d.id = mt.diplomado_id
+          where mt.estudiante_id = auth.uid() and d.lider_id = profiles.id
+        )
+        or exists (
+          select 1 from public.matriculas mt
+          join public.modulos m on m.diplomado_id = mt.diplomado_id
+          join public.modulo_docentes md on md.modulo_id = m.id
+          where mt.estudiante_id = auth.uid() and md.docente_id = profiles.id
+        )
+      )
+    )
+  );
 create policy "actualizar perfiles" on public.profiles for update to authenticated
   using (auth.uid() = id or (institucion_id = public.mi_institucion() and public.es_administrador()))
   with check (auth.uid() = id or (institucion_id = public.mi_institucion() and public.es_administrador()));
