@@ -7,13 +7,18 @@ export const NAV_ITEMS = {
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Diplomados', icon: 'book' },
     { to: '/financiero', label: 'Financiero', icon: 'cash' },
+    { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
   ],
   [ROLES.LIDER]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mi diplomado', icon: 'book' },
+    { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
   ],
-  [ROLES.DOCENTE]: [{ to: '/', label: 'Inicio', icon: 'home', end: true }],
+  [ROLES.DOCENTE]: [
+    { to: '/', label: 'Inicio', icon: 'home', end: true },
+    { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
+  ],
   [ROLES.ESTUDIANTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
