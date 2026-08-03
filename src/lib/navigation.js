@@ -6,6 +6,7 @@ export const NAV_ITEMS = {
   [ROLES.ADMINISTRADOR]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Diplomados', icon: 'book' },
+    { to: '/financiero', label: 'Financiero', icon: 'cash' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
   ],
   [ROLES.LIDER]: [
@@ -16,6 +17,7 @@ export const NAV_ITEMS = {
   [ROLES.ESTUDIANTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
+    { to: '/mis-pagos', label: 'Mis pagos', icon: 'cash' },
   ],
 }
 

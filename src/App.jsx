@@ -17,6 +17,8 @@ import DiplomadoForm from './features/diplomados/pages/DiplomadoForm'
 import DiplomadoDetalle from './features/diplomados/pages/DiplomadoDetalle'
 import ModuloForm from './features/modulos/pages/ModuloForm'
 import ModuloDetalle from './features/modulos/pages/ModuloDetalle'
+import FinancieroAdmin from './features/financiero/pages/FinancieroAdmin'
+import MisPagos from './features/financiero/pages/MisPagos'
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -47,6 +49,23 @@ export default function App() {
           element={
             <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
               <UsuariosList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/financiero"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+              <FinancieroAdmin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/mis-pagos"
+          element={
+            <ProtectedRoute roles={[ROLES.ESTUDIANTE]}>
+              <MisPagos />
             </ProtectedRoute>
           }
         />
