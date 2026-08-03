@@ -29,6 +29,7 @@ Estas decisiones se toman ahora, de forma autónoma y documentada, para evitar r
 | E5 | **Comunicación institucional restringida por pares de rol permitidos** (`administrador↔lider`, `administrador↔docente`, `lider↔docente`), nunca libre ni con estudiantes | Regla de negocio explícita ("no será un chat social"). Se aplica con una función `puede_conversar(role_a, role_b)` reusada en RLS. |
 | E6 | **Certificados con verificación pública** vía función `security definer` que expone solo campos mínimos por código, no la tabla completa | Verificación de diplomas debe ser pública (código QR) sin filtrar datos de otros estudiantes. |
 | A1 | **Auditoría ligera** (`auditoria`) desde el inicio para acciones sensibles (pagos, certificados, cambios de rol) | Requisito implícito de "nivel empresarial"; trazabilidad es barata de agregar ahora y costosa de reconstruir después. |
+| I1 | **Se reutiliza el mismo proyecto Supabase** que ya usaba escuelitadominical (`Emmanuel-accesskids`, ref `pgimdmthbncgpkitnkgi`) en vez de crear uno nuevo, por instrucción explícita del propietario del producto. Existía un segundo proyecto (`Access Kids - v2`) con datos igualmente reales; se dejó intacto — nunca se tocó. | Evita duplicar infraestructura/costos ya pagados; el dominio de datos anterior (niños/padres) se eliminó del proyecto reutilizado (autorizado explícitamente) antes de aplicar el esquema nuevo. |
 
 ## 3. Stack técnico (heredado y confirmado)
 
