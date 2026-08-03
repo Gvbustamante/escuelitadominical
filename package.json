@@ -1,8 +1,9 @@
 {
-  "name": "access-kids",
+  "name": "celm-la-cosecha",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "description": "CELM · La Cosecha — ERP académico para institutos bíblicos",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,6 +11,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2"

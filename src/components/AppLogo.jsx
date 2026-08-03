@@ -1,32 +1,16 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../lib/supabaseClient'
+import { useAuth } from '../contexts/AuthContext'
+import Icon from './ui/Icon'
 
-let cache = null
-const listeners = new Set()
+export default function AppLogo({ institucion, className = 'h-8 w-8 object-contain rounded-md' }) {
+  const { institucion: activa } = useAuth()
+  const inst = institucion ?? activa
 
-async function fetchConfig() {
-  const { data } = await supabase.from('config_iglesia').select('logo_url').limit(1).maybeSingle()
-  cache = data || {}
-  listeners.forEach((fn) => fn(cache))
-  return cache
-}
-
-export function notifyLogoChanged() {
-  fetchConfig()
-}
-
-export default function AppLogo({ emojiClassName = 'text-4xl', imgClassName = 'h-10 w-10 object-contain' }) {
-  const [config, setConfig] = useState(cache)
-
-  useEffect(() => {
-    if (!cache) fetchConfig()
-    const fn = (c) => setConfig(c)
-    listeners.add(fn)
-    return () => listeners.delete(fn)
-  }, [])
-
-  if (config?.logo_url) {
-    return <img src={config.logo_url} alt="Logo de la escuelita" className={imgClassName} />
+  if (inst?.logo_url) {
+    return <img src={inst.logo_url} alt={inst?.nombre ? `Logo de ${inst.nombre}` : 'Logo del instituto'} className={className} />
   }
-  return <span className={emojiClassName}>📖</span>
+  return (
+    <div className={`flex items-center justify-center rounded-md bg-brand text-white ${className}`}>
+      <Icon name="book" className="h-1/2 w-1/2" />
+    </div>
+  )
 }

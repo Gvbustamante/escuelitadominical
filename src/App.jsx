@@ -1,174 +1,195 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Spinner from './components/Spinner'
 import ProtectedRoute from './components/ProtectedRoute'
-import Layout from './components/Layout'
+import Layout from './components/layout/Layout'
 import Login from './pages/Login'
-import Landing from './pages/Landing'
-import CompleteProfile from './pages/CompleteProfile'
-import Tutorial from './pages/Tutorial'
-import Devocionales from './pages/Devocionales'
-import MiFamilia from './pages/MiFamilia'
-import Foro from './pages/Foro'
+import PrimerAcceso from './pages/PrimerAcceso'
+import VerificarCertificado from './pages/VerificarCertificado'
+import NotFound from './pages/NotFound'
+import Forbidden from './pages/Forbidden'
+import Home from './pages/Home'
 
-import AdminHome from './pages/admin/AdminHome'
-import Ninos from './pages/admin/Ninos'
-import Clases from './pages/admin/Clases'
-import Docentes from './pages/admin/Docentes'
-import AsistenciaAdmin from './pages/admin/AsistenciaAdmin'
-import ActividadesAdmin from './pages/admin/ActividadesAdmin'
-import AgendaAdmin from './pages/admin/AgendaAdmin'
-import CitasBiblicasAdmin from './pages/admin/CitasBiblicasAdmin'
-import Ajustes from './pages/admin/Ajustes'
+import { ROLES } from './lib/roles'
 
-import DocenteHome from './pages/docente/DocenteHome'
-import Asistencia from './pages/docente/Asistencia'
-import Actividades from './pages/docente/Actividades'
-import Agenda from './pages/docente/Agenda'
-import Progreso from './pages/docente/Progreso'
+// Code-splitting por ruta: cada módulo de negocio se carga bajo demanda en vez de ir todo en
+// un único bundle (ver docs/ROADMAP.md, aviso de vite build sobre chunks > 500kB).
+const UsuariosList = lazy(() => import('./features/usuarios/pages/UsuariosList'))
+const DiplomadosList = lazy(() => import('./features/diplomados/pages/DiplomadosList'))
+const DiplomadoForm = lazy(() => import('./features/diplomados/pages/DiplomadoForm'))
+const DiplomadoDetalle = lazy(() => import('./features/diplomados/pages/DiplomadoDetalle'))
+const ModuloForm = lazy(() => import('./features/modulos/pages/ModuloForm'))
+const ModuloDetalle = lazy(() => import('./features/modulos/pages/ModuloDetalle'))
+const FinancieroAdmin = lazy(() => import('./features/financiero/pages/FinancieroAdmin'))
+const MisPagos = lazy(() => import('./features/financiero/pages/MisPagos'))
+const Comunicacion = lazy(() => import('./features/comunicacion/pages/Comunicacion'))
+const TareasGestionList = lazy(() => import('./features/tareas_gestion/pages/TareasGestionList'))
+const Biblioteca = lazy(() => import('./features/biblioteca/pages/Biblioteca'))
+const CertificadosAdmin = lazy(() => import('./features/certificados/pages/CertificadosAdmin'))
+const CertificadosLider = lazy(() => import('./features/certificados/pages/CertificadosLider'))
+const MisCertificados = lazy(() => import('./features/certificados/pages/MisCertificados'))
+const CertificadoDetalle = lazy(() => import('./features/certificados/pages/CertificadoDetalle'))
 
-import PadreHome from './pages/padre/PadreHome'
-import PadreActividades from './pages/padre/PadreActividades'
-import PadreAgenda from './pages/padre/PadreAgenda'
-import PadreProgreso from './pages/padre/PadreProgreso'
-
-const STAFF = ['admin', 'coordinador']
+const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
+const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
 
 export default function App() {
   const { loading } = useAuth()
   if (loading) return <Spinner />
 
   return (
-    <Routes>
-      <Route path="/bienvenida" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/completar-perfil" element={<CompleteProfile />} />
+    <Suspense fallback={<Spinner />}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/login/:slug" element={<Login />} />
+        <Route path="/primer-acceso" element={<PrimerAcceso />} />
+        <Route path="/verificar/:codigo" element={<VerificarCertificado />} />
+        <Route path="/403" element={<Forbidden />} />
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }
-      >
-        <Route path="/" element={<RoleSwitchHome />} />
-        <Route path="/ayuda" element={<Tutorial />} />
-        <Route path="/devocionales" element={<Devocionales />} />
-        <Route path="/foro" element={<Foro />} />
         <Route
-          path="/mi-familia"
           element={
-            <ProtectedRoute roles={[...STAFF, 'docente']}>
-              <MiFamilia />
+            <ProtectedRoute>
+              <Layout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="/" element={<Home />} />
 
-        {/* Admin / coordinador */}
-        <Route
-          path="/ninos"
-          element={
-            <ProtectedRoute roles={STAFF}>
-              <Ninos />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/clases"
-          element={
-            <ProtectedRoute roles={STAFF}>
-              <Clases />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/docentes"
-          element={
-            <ProtectedRoute roles={STAFF}>
-              <Docentes />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/asistencia"
-          element={
-            <ProtectedRoute roles={[...STAFF, 'docente']}>
-              <RoleSwitchAsistencia />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/citas-biblicas"
-          element={
-            <ProtectedRoute roles={STAFF}>
-              <CitasBiblicasAdmin />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/ajustes"
-          element={
-            <ProtectedRoute roles={STAFF}>
-              <Ajustes />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/usuarios"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+                <UsuariosList />
+              </ProtectedRoute>
+            }
+          />
 
-        {/* Docente */}
-        <Route
-          path="/actividades"
-          element={
-            <ProtectedRoute roles={[...STAFF, 'docente', 'padre']}>
-              <RoleSwitchActividades />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/agenda"
-          element={
-            <ProtectedRoute roles={[...STAFF, 'docente', 'padre']}>
-              <RoleSwitchAgenda />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/progreso"
-          element={
-            <ProtectedRoute roles={['docente', 'padre']}>
-              <RoleSwitchProgreso />
-            </ProtectedRoute>
-          }
-        />
-      </Route>
-    </Routes>
+          <Route
+            path="/financiero"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+                <FinancieroAdmin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mis-pagos"
+            element={
+              <ProtectedRoute roles={[ROLES.ESTUDIANTE]}>
+                <MisPagos />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/comunicacion"
+            element={
+              <ProtectedRoute roles={STAFF}>
+                <Comunicacion />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tareas-gestion"
+            element={
+              <ProtectedRoute roles={STAFF}>
+                <TareasGestionList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/biblioteca"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <Biblioteca />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/diplomados"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+                <DiplomadosList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diplomados/nuevo"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+                <DiplomadoForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diplomados/:id/editar"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+                <DiplomadoForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diplomados/:id"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+                <DiplomadoDetalle />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/diplomados/:diplomadoId/modulos/nuevo"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+                <ModuloForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/modulos/:id/editar"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+                <ModuloForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/modulos/:id"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <ModuloDetalle />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/certificados"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+                <RoleSwitchCertificados />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/certificados/:id"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+                <CertificadoDetalle />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   )
 }
 
-function RoleSwitchHome() {
+function RoleSwitchCertificados() {
   const { profile } = useAuth()
-  if (profile.role === 'docente') return <DocenteHome />
-  if (profile.role === 'padre') return <PadreHome />
-  return <AdminHome />
-}
-
-function RoleSwitchAsistencia() {
-  const { profile } = useAuth()
-  return profile.role === 'docente' ? <Asistencia /> : <AsistenciaAdmin />
-}
-
-function RoleSwitchActividades() {
-  const { profile } = useAuth()
-  if (STAFF.includes(profile.role)) return <ActividadesAdmin />
-  return profile.role === 'docente' ? <Actividades /> : <PadreActividades />
-}
-
-function RoleSwitchAgenda() {
-  const { profile } = useAuth()
-  if (STAFF.includes(profile.role)) return <AgendaAdmin />
-  return profile.role === 'docente' ? <Agenda /> : <PadreAgenda />
-}
-
-function RoleSwitchProgreso() {
-  const { profile } = useAuth()
-  return profile.role === 'docente' ? <Progreso /> : <PadreProgreso />
+  if (profile.role === ROLES.ADMINISTRADOR) return <CertificadosAdmin />
+  if (profile.role === ROLES.LIDER) return <CertificadosLider />
+  return <MisCertificados />
 }
