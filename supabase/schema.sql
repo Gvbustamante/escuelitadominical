@@ -866,8 +866,9 @@ create policy "administrador gestiona modulos" on public.modulos for all to auth
 create policy "lider gestiona modulos de su diplomado" on public.modulos for all to authenticated
   using (public.es_lider_de_diplomado(diplomado_id))
   with check (public.es_lider_de_diplomado(diplomado_id));
-create policy "docente edita contenido de su modulo" on public.modulos for update to authenticated
-  using (public.es_docente_de_modulo(id));
+-- El docente NO edita la fila de modulos (es logística: horario/salón/fechas límite, del
+-- líder/administrador). Su contenido real vive en recursos_modulo/tareas_academicas/examenes/
+-- asistencia_sesiones, ya protegidas por puede_gestionar_modulo().
 
 -- MODULO_DOCENTES
 create policy "leer asignaciones docentes" on public.modulo_docentes for select to authenticated

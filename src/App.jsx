@@ -10,6 +10,16 @@ import NotFound from './pages/NotFound'
 import Forbidden from './pages/Forbidden'
 import Home from './pages/Home'
 
+import { ROLES } from './lib/roles'
+import UsuariosList from './features/usuarios/pages/UsuariosList'
+import DiplomadosList from './features/diplomados/pages/DiplomadosList'
+import DiplomadoForm from './features/diplomados/pages/DiplomadoForm'
+import DiplomadoDetalle from './features/diplomados/pages/DiplomadoDetalle'
+import ModuloForm from './features/modulos/pages/ModuloForm'
+import ModuloDetalle from './features/modulos/pages/ModuloDetalle'
+
+const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
+
 export default function App() {
   const { loading } = useAuth()
   if (loading) return <Spinner />
@@ -30,6 +40,72 @@ export default function App() {
         }
       >
         <Route path="/" element={<Home />} />
+
+        <Route
+          path="/usuarios"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+              <UsuariosList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/diplomados"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+              <DiplomadosList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/diplomados/nuevo"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+              <DiplomadoForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/diplomados/:id/editar"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+              <DiplomadoForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/diplomados/:id"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+              <DiplomadoDetalle />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/diplomados/:diplomadoId/modulos/nuevo"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+              <ModuloForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/modulos/:id/editar"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER]}>
+              <ModuloForm />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/modulos/:id"
+          element={
+            <ProtectedRoute roles={STAFF}>
+              <ModuloDetalle />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<NotFound />} />
