@@ -1,19 +1,26 @@
-# Access Kids 📖
+# CELM · La Cosecha
 
-Sistema de gestión para escuelas dominicales cristianas: niños, clases, docentes, asistencia, actividades, devocionales y agenda — con un portal para padres.
+ERP académico multi-tenant para institutos bíblicos: diplomados, módulos, docentes,
+estudiantes, finanzas, comunicación institucional, recursos, certificados y reportes.
+
+Ver la documentación de producto en [`docs/`](./docs):
+
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) — arquitectura, decisiones de diseño, organización del código.
+- [`docs/DATA_MODEL.md`](./docs/DATA_MODEL.md) — modelo de datos completo.
+- [`docs/ROLES_PERMISOS.md`](./docs/ROLES_PERMISOS.md) — roles, jerarquía y matriz de permisos.
+- [`docs/UX_GUIDELINES.md`](./docs/UX_GUIDELINES.md) — guía visual y de navegación.
+- [`docs/ROADMAP.md`](./docs/ROADMAP.md) — fases de implementación y estado real del proyecto.
 
 ## Stack
 
-- React + Vite + Tailwind
-- Supabase (base de datos, autenticación, storage de archivos)
+- React + Vite + Tailwind CSS
+- Supabase (base de datos Postgres, autenticación, storage, RLS)
 
 ## Roles
 
-- **Admin / Coordinador**: gestiona niños, clases, docentes, invita usuarios.
-- **Docente**: toma asistencia, publica actividades (con archivos), agenda eventos, en sus clases asignadas.
-- **Padre / Madre**: ve la información de sus hijos, reacciona a las actividades, ve la agenda.
-
-Las cuentas de docentes y padres solo las crea un admin/coordinador (botón "Invitar" en cada sección), que envía un correo de invitación.
+**Administrador** (control total del instituto) → **Líder** (dueño de un diplomado) →
+**Docente** (dueño del contenido de sus módulos) → **Estudiante** (consume y entrega).
+Detalle completo en `docs/ROLES_PERMISOS.md`.
 
 ## Desarrollo local
 
@@ -23,14 +30,19 @@ cp .env.example .env.local   # completa con tu URL y anon key de Supabase
 npm run dev
 ```
 
+### Base de datos
+
+1. Crea un proyecto en [supabase.com](https://supabase.com).
+2. En **SQL Editor**, ejecuta todo el contenido de [`supabase/schema.sql`](./supabase/schema.sql).
+3. Crea la primera institución y el primer administrador con
+   [`supabase/primer_admin.sql`](./supabase/primer_admin.sql) (edítalo con los datos reales antes de ejecutarlo).
+
+Este proyecto es **multi-tenant**: un solo proyecto de Supabase puede alojar muchos institutos,
+aislados por `institucion_id` y RLS (ver `docs/DATA_MODEL.md`).
+
 ## Despliegue
 
-Cada push a `main` despliega automáticamente a GitHub Pages vía GitHub Actions (`.github/workflows/deploy.yml`).
-
-Para activarlo (una sola vez):
-
-1. En GitHub: **Settings → Secrets and variables → Actions**, agrega:
-   - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY`
-2. En **Settings → Pages**, en "Source" elige **GitHub Actions**.
-3. Haz push a `main` (o correlo manualmente desde la pestaña Actions).
+Cada push a `main` despliega automáticamente a GitHub Pages vía GitHub Actions
+(`.github/workflows/deploy.yml`). Requiere los secrets `VITE_SUPABASE_URL` y
+`VITE_SUPABASE_ANON_KEY` configurados en **Settings → Secrets and variables → Actions**, y
+**Settings → Pages → Source: GitHub Actions**.
