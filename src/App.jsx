@@ -22,6 +22,10 @@ import MisPagos from './features/financiero/pages/MisPagos'
 import Comunicacion from './features/comunicacion/pages/Comunicacion'
 import TareasGestionList from './features/tareas_gestion/pages/TareasGestionList'
 import Biblioteca from './features/biblioteca/pages/Biblioteca'
+import CertificadosAdmin from './features/certificados/pages/CertificadosAdmin'
+import CertificadosLider from './features/certificados/pages/CertificadosLider'
+import MisCertificados from './features/certificados/pages/MisCertificados'
+import CertificadoDetalle from './features/certificados/pages/CertificadoDetalle'
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -153,9 +157,33 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/certificados"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+              <RoleSwitchCertificados />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/certificados/:id"
+          element={
+            <ProtectedRoute roles={[ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.ESTUDIANTE]}>
+              <CertificadoDetalle />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>
   )
+}
+
+function RoleSwitchCertificados() {
+  const { profile } = useAuth()
+  if (profile.role === ROLES.ADMINISTRADOR) return <CertificadosAdmin />
+  if (profile.role === ROLES.LIDER) return <CertificadosLider />
+  return <MisCertificados />
 }

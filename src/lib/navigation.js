@@ -10,6 +10,7 @@ export const NAV_ITEMS = {
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
+    { to: '/certificados', label: 'Certificados', icon: 'award' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
   ],
   [ROLES.LIDER]: [
@@ -18,6 +19,7 @@ export const NAV_ITEMS = {
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
+    { to: '/certificados', label: 'Certificados', icon: 'award' },
   ],
   [ROLES.DOCENTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
@@ -30,6 +32,7 @@ export const NAV_ITEMS = {
     { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
     { to: '/mis-pagos', label: 'Mis pagos', icon: 'cash' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
+    { to: '/certificados', label: 'Certificados', icon: 'award' },
   ],
 }
 
