@@ -21,6 +21,7 @@ import FinancieroAdmin from './features/financiero/pages/FinancieroAdmin'
 import MisPagos from './features/financiero/pages/MisPagos'
 import Comunicacion from './features/comunicacion/pages/Comunicacion'
 import TareasGestionList from './features/tareas_gestion/pages/TareasGestionList'
+import Biblioteca from './features/biblioteca/pages/Biblioteca'
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -84,6 +85,14 @@ export default function App() {
           element={
             <ProtectedRoute roles={STAFF}>
               <TareasGestionList />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/biblioteca"
+          element={
+            <ProtectedRoute roles={TODOS}>
+              <Biblioteca />
             </ProtectedRoute>
           }
         />

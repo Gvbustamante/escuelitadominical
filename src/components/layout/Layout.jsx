@@ -13,6 +13,7 @@ export default function Layout() {
   const [moreOpen, setMoreOpen] = useState(false)
   const items = navFor(profile?.role)
   const mobileItems = items.slice(0, 4)
+  const overflowItems = items.slice(4)
 
   return (
     <div className="flex min-h-screen bg-surface">
@@ -106,6 +107,18 @@ export default function Layout() {
         <div className="fixed inset-0 z-50 flex items-end bg-ink/40 md:hidden" onClick={() => setMoreOpen(false)}>
           <div className="w-full rounded-t-lg bg-surface-raised p-4" onClick={(e) => e.stopPropagation()}>
             <p className="mb-3 truncate text-sm font-medium text-ink">{profile?.nombre_completo} · {ROLE_LABELS[profile?.role]}</p>
+            {overflowItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={() => setMoreOpen(false)}
+                className="btn-secondary mb-2 w-full justify-start"
+              >
+                <Icon name={item.icon} className="h-4 w-4" /> {item.label}
+              </NavLink>
+            ))}
+            {overflowItems.length > 0 && <div className="my-2 border-t border-slate-100" />}
             <button onClick={() => { setMoreOpen(false); setPwOpen(true) }} className="btn-secondary mb-2 w-full justify-start">
               <Icon name="key" className="h-4 w-4" /> Cambiar contraseña
             </button>

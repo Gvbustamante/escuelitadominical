@@ -9,6 +9,7 @@ export const NAV_ITEMS = {
     { to: '/financiero', label: 'Financiero', icon: 'cash' },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
+    { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
   ],
   [ROLES.LIDER]: [
@@ -16,16 +17,19 @@ export const NAV_ITEMS = {
     { to: '/diplomados', label: 'Mi diplomado', icon: 'book' },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
+    { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
   ],
   [ROLES.DOCENTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
+    { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
   ],
   [ROLES.ESTUDIANTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
     { to: '/mis-pagos', label: 'Mis pagos', icon: 'cash' },
+    { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
   ],
 }
 
