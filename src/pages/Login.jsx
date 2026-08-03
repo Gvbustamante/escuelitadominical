@@ -1,14 +1,25 @@
-import { useState } from 'react'
-import { Navigate, Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Navigate, useParams } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import { fetchInstitucionPorSlug, ULTIMO_INSTITUTO_KEY } from '../lib/tenant'
 import AppLogo from '../components/AppLogo'
 
 export default function Login() {
   const { session, signIn, loading } = useAuth()
+  const { slug: slugDeRuta } = useParams()
+  const [slug, setSlug] = useState(slugDeRuta || localStorage.getItem(ULTIMO_INSTITUTO_KEY) || '')
+  const [institucion, setInstitucion] = useState(null)
   const [usuario, setUsuario] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  const esCorreo = usuario.includes('@')
+
+  useEffect(() => {
+    if (!slug) return setInstitucion(null)
+    fetchInstitucionPorSlug(slug).then(setInstitucion)
+  }, [slug])
 
   if (!loading && session) return <Navigate to="/" replace />
 
@@ -16,35 +27,41 @@ export default function Login() {
     e.preventDefault()
     setError('')
     setBusy(true)
-    const valor = usuario.trim()
-    const email = valor.includes('@')
-      ? valor
-      : `${valor.toLowerCase().replace(/[^a-z0-9]/g, '')}@accesskids.local`
-    const { error } = await signIn(email, password)
+    const { error } = await signIn(usuario, password, esCorreo ? null : slug)
     setBusy(false)
-    if (error) setError('Cédula (o correo) o contraseña incorrectos.')
+    if (error) setError('Usuario o contraseña incorrectos.')
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-sky-100 p-4">
-      <div className="card w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-surface p-4">
+      <div className="card w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
-          <AppLogo emojiClassName="text-6xl" imgClassName="h-16 w-16 object-contain" />
-          <h1 className="text-3xl uppercase text-sky-500">
-            Access <span className="text-coral-500">Kids</span>
-          </h1>
-          <p className="font-bold text-ink/50">Ingresa con tu cuenta</p>
+          <AppLogo institucion={institucion} className="h-14 w-14 object-contain rounded-lg" />
+          <h1 className="text-xl font-semibold text-ink">{institucion?.nombre || 'CELM · La Cosecha'}</h1>
+          <p className="text-sm text-ink-soft">ERP académico para institutos bíblicos</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {!esCorreo && (
+            <div>
+              <label className="label">Código de instituto</label>
+              <input
+                className="input"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="ej. la-cosecha"
+                autoComplete="organization"
+              />
+            </div>
+          )}
           <div>
-            <label className="label">Cédula</label>
+            <label className="label">Usuario o correo</label>
             <input
               required
               className="input"
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
-              placeholder="Tu número de cédula"
+              placeholder="Tu documento o correo"
               autoComplete="username"
             />
           </div>
@@ -59,18 +76,15 @@ export default function Login() {
               placeholder="••••••••"
             />
           </div>
-          {error && <p className="rounded-xl bg-coral-50 px-3 py-2 text-sm font-bold text-coral-600">{error}</p>}
-          <button type="submit" disabled={busy} className="btn-primary mt-2 justify-center">
-            {busy ? 'Entrando...' : 'Entrar'}
+          {error && <p className="rounded-md bg-danger-50 px-3 py-2 text-sm font-medium text-danger-600">{error}</p>}
+          <button type="submit" disabled={busy} className="btn-primary mt-1 justify-center">
+            {busy ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-ink/40">
-          ¿No tienes cuenta? Pide al administrador de tu escuelita que te invite.
+        <p className="mt-6 text-center text-xs text-ink-faint">
+          ¿No tienes cuenta? Pide a tu administrador o líder que te invite.
         </p>
-        <Link to="/bienvenida" className="mt-2 block text-center text-sm font-bold text-sky-500 hover:underline">
-          ← Conoce Access Kids
-        </Link>
       </div>
     </div>
   )
