@@ -600,6 +600,76 @@ as $$
     or public.es_docente_de_modulo(p_modulo_id);
 $$;
 
+-- Las siguientes envuelven en una función security definer (opaca para el planificador)
+-- cualquier chequeo que antes cruzaba directamente entre modulos y diplomados dentro del
+-- USING de sus propias políticas RLS. Postgres expande, al reescribir una consulta, las
+-- políticas RLS de CUALQUIER tabla referenciada literalmente dentro de otra política — así
+-- que "modulos" citando "diplomados" en crudo y "diplomados" citando "modulos" en crudo
+-- formaba un ciclo real (no solo un riesgo teórico): evaluar la política de profiles sobre
+-- un docente/estudiante disparaba "infinite recursion detected in policy for relation
+-- modulos" (Postgres 42P17) para CUALQUIER usuario autenticado, admin incluido. Al mover el
+-- cruce dentro de una función, el acceso a la otra tabla ocurre con los privilegios del
+-- dueño de la función (que evita RLS), igual que el resto de funciones de esta sección.
+create or replace function public.institucion_de_diplomado(p_diplomado_id uuid)
+returns uuid
+language sql stable security definer set search_path = public
+as $$
+  select institucion_id from public.diplomados where id = p_diplomado_id;
+$$;
+
+create or replace function public.institucion_de_modulo(p_modulo_id uuid)
+returns uuid
+language sql stable security definer set search_path = public
+as $$
+  select d.institucion_id from public.modulos m join public.diplomados d on d.id = m.diplomado_id where m.id = p_modulo_id;
+$$;
+
+create or replace function public.tengo_modulo_como_docente(p_diplomado_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.modulos m
+    join public.modulo_docentes md on md.modulo_id = m.id
+    where m.diplomado_id = p_diplomado_id and md.docente_id = auth.uid()
+  );
+$$;
+
+create or replace function public.es_docente_relacionado_con(p_profile_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.modulos m
+    join public.diplomados d on d.id = m.diplomado_id
+    join public.modulo_docentes md on md.modulo_id = m.id
+    where md.docente_id = auth.uid() and d.lider_id = p_profile_id
+  )
+  or exists (
+    select 1 from public.modulo_docentes md
+    join public.modulos m on m.id = md.modulo_id
+    join public.matriculas mt on mt.diplomado_id = m.diplomado_id
+    where md.docente_id = auth.uid() and mt.estudiante_id = p_profile_id
+  );
+$$;
+
+create or replace function public.es_estudiante_relacionado_con(p_profile_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.matriculas mt
+    join public.diplomados d on d.id = mt.diplomado_id
+    where mt.estudiante_id = auth.uid() and d.lider_id = p_profile_id
+  )
+  or exists (
+    select 1 from public.matriculas mt
+    join public.modulos m on m.diplomado_id = mt.diplomado_id
+    join public.modulo_docentes md on md.modulo_id = m.id
+    where mt.estudiante_id = auth.uid() and md.docente_id = p_profile_id
+  );
+$$;
+
 create or replace function public.puede_conversar(p_a uuid, p_b uuid)
 returns boolean
 language plpgsql stable security definer set search_path = public
@@ -809,35 +879,12 @@ create policy "leer perfiles relacionados" on public.profiles for select to auth
       public.mi_rol() = 'lider' and institucion_id = public.mi_institucion() and role in ('docente','estudiante')
     )
     or (
-      public.mi_rol() = 'docente' and institucion_id = public.mi_institucion() and (
-        exists (
-          select 1 from public.modulos m
-          join public.diplomados d on d.id = m.diplomado_id
-          join public.modulo_docentes md on md.modulo_id = m.id
-          where md.docente_id = (select auth.uid()) and d.lider_id = profiles.id
-        )
-        or exists (
-          select 1 from public.modulo_docentes md
-          join public.modulos m on m.id = md.modulo_id
-          join public.matriculas mt on mt.diplomado_id = m.diplomado_id
-          where md.docente_id = (select auth.uid()) and mt.estudiante_id = profiles.id
-        )
-      )
+      public.mi_rol() = 'docente' and institucion_id = public.mi_institucion()
+      and public.es_docente_relacionado_con(profiles.id)
     )
     or (
-      public.mi_rol() = 'estudiante' and institucion_id = public.mi_institucion() and (
-        exists (
-          select 1 from public.matriculas mt
-          join public.diplomados d on d.id = mt.diplomado_id
-          where mt.estudiante_id = (select auth.uid()) and d.lider_id = profiles.id
-        )
-        or exists (
-          select 1 from public.matriculas mt
-          join public.modulos m on m.diplomado_id = mt.diplomado_id
-          join public.modulo_docentes md on md.modulo_id = m.id
-          where mt.estudiante_id = (select auth.uid()) and md.docente_id = profiles.id
-        )
-      )
+      public.mi_rol() = 'estudiante' and institucion_id = public.mi_institucion()
+      and public.es_estudiante_relacionado_con(profiles.id)
     )
   );
 create policy "actualizar perfiles" on public.profiles for update to authenticated
@@ -850,7 +897,7 @@ create policy "leer diplomados de mi institucion" on public.diplomados for selec
     institucion_id = public.mi_institucion()
     and (
       public.mi_rol() in ('administrador','lider')
-      or exists (select 1 from public.modulos m where m.diplomado_id = diplomados.id and public.es_docente_de_modulo(m.id))
+      or public.tengo_modulo_como_docente(id)
       or public.esta_matriculado(id)
     )
   );
@@ -864,7 +911,7 @@ create policy "lider edita su diplomado" on public.diplomados for update to auth
 -- MODULOS
 create policy "leer modulos accesibles" on public.modulos for select to authenticated
   using (
-    exists (select 1 from public.diplomados d where d.id = modulos.diplomado_id and d.institucion_id = public.mi_institucion())
+    public.institucion_de_diplomado(modulos.diplomado_id) = public.mi_institucion()
     and (
       public.mi_rol() = 'administrador'
       or public.es_lider_de_modulo(id)
@@ -873,8 +920,8 @@ create policy "leer modulos accesibles" on public.modulos for select to authenti
     )
   );
 create policy "administrador gestiona modulos" on public.modulos for all to authenticated
-  using (exists (select 1 from public.diplomados d where d.id = modulos.diplomado_id and d.institucion_id = public.mi_institucion()) and public.es_administrador())
-  with check (exists (select 1 from public.diplomados d where d.id = modulos.diplomado_id and d.institucion_id = public.mi_institucion()) and public.es_administrador());
+  using (public.institucion_de_diplomado(modulos.diplomado_id) = public.mi_institucion() and public.es_administrador())
+  with check (public.institucion_de_diplomado(modulos.diplomado_id) = public.mi_institucion() and public.es_administrador());
 create policy "lider gestiona modulos de su diplomado" on public.modulos for all to authenticated
   using (public.es_lider_de_diplomado(diplomado_id))
   with check (public.es_lider_de_diplomado(diplomado_id));
@@ -884,7 +931,7 @@ create policy "lider gestiona modulos de su diplomado" on public.modulos for all
 
 -- MODULO_DOCENTES
 create policy "leer asignaciones docentes" on public.modulo_docentes for select to authenticated
-  using (exists (select 1 from public.modulos m join public.diplomados d on d.id = m.diplomado_id where m.id = modulo_docentes.modulo_id and d.institucion_id = public.mi_institucion()));
+  using (public.institucion_de_modulo(modulo_docentes.modulo_id) = public.mi_institucion());
 create policy "administrador y lider asignan docentes" on public.modulo_docentes for all to authenticated
   using (public.es_administrador() or public.es_lider_de_modulo(modulo_id))
   with check (public.es_administrador() or public.es_lider_de_modulo(modulo_id));
@@ -1468,6 +1515,11 @@ revoke all on function public.puede_conversar(uuid, uuid) from public, anon;
 revoke all on function public.puede_ver_tarea_gestion(uuid) from public, anon;
 grant execute on function public.puede_ver_tarea_gestion(uuid) to authenticated;
 revoke all on function public.es_participante(uuid) from public, anon;
+revoke all on function public.institucion_de_diplomado(uuid) from public, anon;
+revoke all on function public.institucion_de_modulo(uuid) from public, anon;
+revoke all on function public.tengo_modulo_como_docente(uuid) from public, anon;
+revoke all on function public.es_docente_relacionado_con(uuid) from public, anon;
+revoke all on function public.es_estudiante_relacionado_con(uuid) from public, anon;
 grant execute on function public.mi_institucion() to authenticated;
 grant execute on function public.mi_rol() to authenticated;
 grant execute on function public.es_administrador() to authenticated;
@@ -1479,6 +1531,11 @@ grant execute on function public.esta_matriculado_modulo(uuid) to authenticated;
 grant execute on function public.puede_gestionar_modulo(uuid) to authenticated;
 grant execute on function public.puede_conversar(uuid, uuid) to authenticated;
 grant execute on function public.es_participante(uuid) to authenticated;
+grant execute on function public.institucion_de_diplomado(uuid) to authenticated;
+grant execute on function public.institucion_de_modulo(uuid) to authenticated;
+grant execute on function public.tengo_modulo_como_docente(uuid) to authenticated;
+grant execute on function public.es_docente_relacionado_con(uuid) to authenticated;
+grant execute on function public.es_estudiante_relacionado_con(uuid) to authenticated;
 
 revoke all on function public.calificar_intento_examen() from public, anon, authenticated;
 revoke all on function public.set_updated_at() from public, anon, authenticated;
