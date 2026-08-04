@@ -19,7 +19,13 @@ export function AuthProvider({ children }) {
       resetBrand()
       return
     }
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle()
+    if (error) {
+      // Un error aquí (ej. RLS mal configurada, red caída) se ve idéntico a "el perfil no
+      // existe" si se ignora silenciosamente — indistinguible en la UI y muy difícil de
+      // diagnosticar en producción. Se deja explícito en consola para no repetir eso.
+      console.error('Error al cargar el perfil:', error)
+    }
     setProfile(data)
     if (data?.institucion_id) {
       const inst = await fetchInstitucionPorId(data.institucion_id)
