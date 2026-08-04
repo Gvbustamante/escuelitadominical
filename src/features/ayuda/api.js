@@ -23,6 +23,7 @@ export async function estadoPuestaEnMarcha() {
     conceptosPago,
     plantillasCertificado,
     recursosBiblioteca,
+    eventos,
   ] = await Promise.all([
     contar(supabase.from('diplomados').select('id', { count: 'exact', head: true })),
     contar(supabase.from('diplomados').select('id', { count: 'exact', head: true }).is('lider_id', null)),
@@ -35,6 +36,7 @@ export async function estadoPuestaEnMarcha() {
     contar(supabase.from('conceptos_pago').select('id', { count: 'exact', head: true })),
     contar(supabase.from('plantillas_certificado').select('id', { count: 'exact', head: true })),
     contar(supabase.from('biblioteca_recursos').select('id', { count: 'exact', head: true })),
+    contar(supabase.from('eventos').select('id', { count: 'exact', head: true })),
   ])
 
   return {
@@ -49,5 +51,6 @@ export async function estadoPuestaEnMarcha() {
     conceptosPago,
     plantillasCertificado,
     recursosBiblioteca,
+    eventos,
   }
 }

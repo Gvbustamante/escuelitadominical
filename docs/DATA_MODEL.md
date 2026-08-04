@@ -43,8 +43,22 @@ indique lo contrario.
 ## 4. Vida de módulo (opcional por módulo)
 
 - **foro_temas** / **foro_mensajes** — foro académico del módulo (si `foro_habilitado`).
-- **devocionales** — opcional por módulo o institucional (`modulo_id` nullable).
+- **devocionales** — opcional por módulo o institucional (`modulo_id` nullable), con
+  `imagen_url` opcional de portada.
 - **peticiones_oracion** — opcional por módulo, con bandera `privado`.
+
+## 4b. Agenda institucional
+
+- **eventos** — conferencias, graduaciones, campañas y reuniones del instituto. No cuelga de
+  ningún módulo: es institucional. Campos propios: `tipo` (define el color en el calendario),
+  `fecha_inicio`/`fecha_fin`, `todo_el_dia`, `lugar`, `imagen_url` (afiche), `visible_para`
+  (`todos` | `staff`) y `destacado`.
+  `destacado` lleva un índice único parcial por institución: solo puede haber uno, porque el
+  banner del inicio es uno solo y varios obligarían a un desempate arbitrario en la consulta.
+
+El **calendario** no tiene tabla: agrega en el cliente los eventos, las clases (derivadas de
+`modulos.dia_semana` + horas + rango de vigencia), las `fecha_limite` de tareas académicas, el
+cierre de exámenes y las tareas de gestión. Ver decisiones C1–C3 en `ARCHITECTURE.md`.
 
 ## 5. Evidencias de clase
 

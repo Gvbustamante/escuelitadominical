@@ -12,6 +12,12 @@ export async function urlFirmada(bucket, path, expiresIn = 3600) {
   return data.signedUrl
 }
 
+// Para buckets públicos (marca, avatares, eventos, devocionales). No caduca, a diferencia de
+// urlFirmada: es lo que se necesita en imágenes que quedan pintadas en pantalla mucho rato.
+export function urlPublica(bucket, path) {
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl
+}
+
 export async function eliminarArchivo(bucket, path) {
   const { error } = await supabase.storage.from(bucket).remove([path])
   if (error) throw error

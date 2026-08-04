@@ -258,10 +258,37 @@ create table public.devocionales (
   titulo text not null,
   referencia_biblica text,
   contenido text not null,
+  imagen_url text,
   fecha date not null default current_date,
   creado_por uuid references public.profiles(id),
   created_at timestamptz not null default now()
 );
+
+-- Agenda institucional de eventos. Vive aparte de asistencia_sesiones (que es la clase real
+-- de un módulo) y de tareas_gestion (encargos internos): un evento es institucional, tiene
+-- público, lugar y afiche, y no pertenece a ningún módulo.
+create table public.eventos (
+  id uuid primary key default gen_random_uuid(),
+  institucion_id uuid not null references public.instituciones(id) on delete cascade,
+  titulo text not null,
+  descripcion text,
+  tipo text not null default 'general'
+    check (tipo in ('general','academico','espiritual','administrativo','social')),
+  fecha_inicio timestamptz not null,
+  fecha_fin timestamptz,
+  todo_el_dia boolean not null default false,
+  lugar text,
+  imagen_url text,
+  -- destacado: su imagen se muestra como banner en el dashboard. Se limita a uno por
+  -- institución con un índice único parcial (ver sección de índices).
+  destacado boolean not null default false,
+  visible_para text not null default 'todos' check (visible_para in ('todos','staff')),
+  creado_por uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint eventos_rango_valido check (fecha_fin is null or fecha_fin >= fecha_inicio)
+);
+comment on table public.eventos is 'Agenda institucional: conferencias, graduaciones, campañas, reuniones. El evento destacado se muestra como banner en el dashboard.';
 
 create table public.peticiones_oracion (
   id uuid primary key default gen_random_uuid(),
@@ -764,6 +791,8 @@ create trigger trg_calificaciones_modulo_updated_at before update on public.cali
   for each row execute function public.set_updated_at();
 create trigger trg_tareas_gestion_updated_at before update on public.tareas_gestion
   for each row execute function public.set_updated_at();
+create trigger trg_eventos_updated_at before update on public.eventos
+  for each row execute function public.set_updated_at();
 
 -- Autocalifica intentos de examen al entregarse (opción múltiple / verdadero-falso).
 create or replace function public.calificar_intento_examen()
@@ -829,6 +858,7 @@ alter table public.calificaciones_modulo enable row level security;
 alter table public.foro_temas enable row level security;
 alter table public.foro_mensajes enable row level security;
 alter table public.devocionales enable row level security;
+alter table public.eventos enable row level security;
 alter table public.peticiones_oracion enable row level security;
 alter table public.evidencias_clase enable row level security;
 alter table public.conceptos_pago enable row level security;
@@ -1064,6 +1094,17 @@ create policy "staff gestiona devocionales" on public.devocionales for all to au
   using (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider','docente'))
   with check (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider','docente'));
 
+-- EVENTOS: los ve todo el instituto salvo los marcados como solo-staff; los gestionan
+-- administrador y líder (el docente no organiza agenda institucional).
+create policy "leer eventos de mi institucion" on public.eventos for select to authenticated
+  using (
+    institucion_id = public.mi_institucion()
+    and (visible_para = 'todos' or public.mi_rol() in ('administrador','lider','docente'))
+  );
+create policy "administrador y lider gestionan eventos" on public.eventos for all to authenticated
+  using (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider'))
+  with check (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider'));
+
 create policy "leer peticiones visibles" on public.peticiones_oracion for select to authenticated
   using (
     institucion_id = public.mi_institucion()
@@ -1208,7 +1249,9 @@ insert into storage.buckets (id, name, public) values
   ('mensajes-adjuntos', 'mensajes-adjuntos', false),
   ('marca', 'marca', true),
   ('avatares', 'avatares', true),
-  ('tareas-gestion', 'tareas-gestion', false)
+  ('tareas-gestion', 'tareas-gestion', false),
+  ('eventos', 'eventos', true),
+  ('devocionales', 'devocionales', true)
 on conflict (id) do nothing;
 
 comment on table storage.objects is 'Convención de path: {institucion_id}/... — el primer segmento siempre es el institucion_id del propietario, usado por las políticas para aislar por tenant.';
@@ -1270,6 +1313,18 @@ create policy "administrador sube marca" on storage.objects for all to authentic
 create policy "usuario sube su propio avatar" on storage.objects for all to authenticated
   using (bucket_id = 'avatares' and (storage.foldername(name))[1] = auth.uid()::text)
   with check (bucket_id = 'avatares' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- eventos / devocionales: {institucion_id}/archivo — buckets públicos porque son imágenes que
+-- se pintan inline (<img src>) en listados y en el banner del dashboard, donde una URL firmada
+-- que expira dejaría imágenes rotas al rato. Mismo criterio que 'marca' y 'avatares', y por la
+-- misma razón que aquellos tampoco llevan política de SELECT.
+create policy "administrador y lider suben imagenes de eventos" on storage.objects for all to authenticated
+  using (bucket_id = 'eventos' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.mi_rol() in ('administrador','lider'))
+  with check (bucket_id = 'eventos' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.mi_rol() in ('administrador','lider'));
+
+create policy "staff sube imagenes de devocionales" on storage.objects for all to authenticated
+  using (bucket_id = 'devocionales' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.mi_rol() in ('administrador','lider','docente'))
+  with check (bucket_id = 'devocionales' and (storage.foldername(name))[1] = public.mi_institucion()::text and public.mi_rol() in ('administrador','lider','docente'));
 
 -- tareas-gestion: {institucion_id}/{tarea_id}/archivo — no reutiliza 'biblioteca' (escritura
 -- reservada a administrador ahí); aquí puede escribir cualquiera con acceso a la tarea.
@@ -1629,3 +1684,8 @@ create index if not exists idx_tareas_gestion_comentarios_autor_id on public.tar
 create index if not exists idx_tareas_gestion_comentarios_tarea_id on public.tareas_gestion_comentarios(tarea_id);
 create index if not exists idx_tareas_gestion_historial_cambiado_por on public.tareas_gestion_historial(cambiado_por);
 create index if not exists idx_tareas_gestion_historial_tarea_id on public.tareas_gestion_historial(tarea_id);
+create index if not exists idx_eventos_institucion_fecha on public.eventos (institucion_id, fecha_inicio);
+-- Solo puede haber un evento destacado por institución: el banner del dashboard es uno solo,
+-- y dejar que haya varios obligaría a inventar un desempate arbitrario en la consulta.
+create unique index if not exists idx_eventos_destacado_unico on public.eventos (institucion_id) where destacado;
+create index if not exists idx_devocionales_institucion_fecha on public.devocionales (institucion_id, fecha desc);

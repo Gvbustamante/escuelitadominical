@@ -5,6 +5,7 @@ import Icon from '../../../components/ui/Icon'
 import Spinner from '../../../components/Spinner'
 import { useAuth } from '../../../contexts/AuthContext'
 import { ROLES } from '../../../lib/roles'
+import { DIAS_SEMANA } from '../../../lib/fechas'
 import { obtenerModulo } from '../api'
 import { obtenerDiplomado } from '../../diplomados/api'
 import RecursosPanel from '../../recursos/components/RecursosPanel'
@@ -13,8 +14,6 @@ import ExamenesPanel from '../../examenes/components/ExamenesPanel'
 import AsistenciaPanel from '../../asistencia/components/AsistenciaPanel'
 import CalificacionesPanel from '../../calificaciones/components/CalificacionesPanel'
 import EvidenciasPanel from '../../evidencias/components/EvidenciasPanel'
-
-const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 const TABS_BASE = [
   { key: 'resumen', label: 'Resumen' },
@@ -91,7 +90,7 @@ export default function ModuloDetalle() {
           <div className="card">
             <p className="label !mb-1">Horario</p>
             <p className="text-sm text-ink">
-              {modulo.dia_semana != null ? DIAS[modulo.dia_semana] : '—'}
+              {modulo.dia_semana != null ? DIAS_SEMANA[modulo.dia_semana] : '—'}
               {modulo.hora_inicio ? ` · ${modulo.hora_inicio.slice(0, 5)}–${modulo.hora_fin?.slice(0, 5) || ''}` : ''}
             </p>
           </div>

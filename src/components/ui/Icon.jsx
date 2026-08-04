@@ -29,6 +29,11 @@ const PATHS = {
   'alert-triangle': 'M12 9v4m0 4h.01M10.3 3.9 2.5 17a1 1 0 0 0 .9 1.5h17.2a1 1 0 0 0 .9-1.5L13.7 3.9a1 1 0 0 0-1.7 0Z',
   clock: 'M12 7v5l3 3M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
   'help-circle': 'M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.7-.8 1.2v.4m0 3h.01M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+  calendar: 'M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z',
+  image: 'M4 6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6Zm1 11 5-5 3 3 2.5-2.5L20 16M9.5 9.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z',
+  'chevron-left': 'M15 6l-6 6 6 6',
+  'chevron-right': 'M9 6l6 6-6 6',
+  sun: 'M12 5V3m0 18v-2m7-7h2M3 12h2m11.7-4.7 1.4-1.4M5.9 18.1l1.4-1.4m9.4 0 1.4 1.4M5.9 5.9l1.4 1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z',
 }
 
 export default function Icon({ name, className = 'h-5 w-5', strokeWidth = 1.75 }) {

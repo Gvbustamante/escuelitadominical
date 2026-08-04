@@ -87,6 +87,9 @@ conversación en la UI.
 | Comunicación | admin↔líder, admin↔docente | líder↔admin, líder↔docente(propio) | docente↔admin, docente↔líder(propio) | — |
 | Tareas de gestión | Asignar/ver todas | Asignar/ver del propio diplomado | Ver/actualizar las propias | — |
 | Biblioteca institucional | CRUD | Ver/descargar | Ver/descargar | Ver/descargar (si aplica) |
+| Agenda de eventos | CRUD | CRUD | Ver | Ver (solo los marcados para todo el instituto) |
+| Devocionales | CRUD | CRUD | CRUD | Ver |
+| Calendario | Todo el instituto | Su diplomado | Sus módulos | Sus módulos |
 | Certificados | CRUD, emitir | Solicitar emisión de su diplomado | — | Ver/descargar los propios |
 | Configuración/Permisos | CRUD | — | — | — |
 | Reportes | Todos | Del propio diplomado | De sus módulos | Los propios |
