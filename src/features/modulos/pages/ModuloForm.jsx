@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import PageHeader from '../../../components/ui/PageHeader'
 import Spinner from '../../../components/Spinner'
+import { DIAS_SEMANA } from '../../../lib/fechas'
 import {
   crearModulo, actualizarModulo, obtenerModulo, listarDocentesDisponibles, asignarDocentes,
 } from '../api'
-
-const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 
 export default function ModuloForm() {
   const { id, diplomadoId } = useParams()
@@ -128,7 +127,7 @@ export default function ModuloForm() {
             <label className="label">Día</label>
             <select className="input" value={form.dia_semana} onChange={(e) => set('dia_semana', e.target.value)}>
               <option value="">—</option>
-              {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+              {DIAS_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
             </select>
           </div>
           <div className="flex gap-2">

@@ -121,6 +121,17 @@ export function pasosAdministrador(e) {
       to: '/biblioteca',
       cta: 'Ir a Biblioteca',
     },
+    {
+      id: 'agenda',
+      titulo: 'Publica los primeros eventos',
+      descripcion:
+        'Conferencias, graduaciones y campañas, con su afiche. El evento que marques como destacado se muestra como banner en el inicio de todos.',
+      listo: e.eventos > 0,
+      resumen: e.eventos > 0 ? `${e.eventos} evento(s)` : null,
+      opcional: true,
+      to: '/agenda',
+      cta: 'Ir a Agenda',
+    },
   ]
 }
 
@@ -168,6 +179,20 @@ export const GUIAS = {
         cta: 'Abrir comunicación',
       },
       {
+        titulo: 'Usa el calendario para no perder fechas',
+        detalle:
+          'Reúne en una sola pantalla las clases de tus módulos, las entregas, los exámenes, los eventos y tus tareas administrativas, cada cosa con su color. Puedes verlo por mes, por semana o por año.',
+        to: '/calendario',
+        cta: 'Abrir calendario',
+      },
+      {
+        titulo: 'Publica eventos y devocionales',
+        detalle:
+          'En "Agenda" creas eventos con su afiche; el que marques como destacado sale como banner en el inicio de todos. En "Devocionales" publicas reflexiones, con imagen si quieres.',
+        to: '/agenda',
+        cta: 'Ir a la agenda',
+      },
+      {
         titulo: 'Solicita los certificados al terminar',
         detalle:
           'Cuando un estudiante completa el diplomado, desde "Certificados" pides su emisión al administrador.',
@@ -213,6 +238,20 @@ export const GUIAS = {
           'Registra el estado del aula antes y después de la clase con fotos. Es tu respaldo del uso del espacio.',
       },
       {
+        titulo: 'Revisa el calendario antes de cada semana',
+        detalle:
+          'Muestra las clases de tus módulos, las entregas y exámenes que pusiste, los eventos del instituto y tus tareas administrativas, cada uno con su color. En vista de mes, semana o año.',
+        to: '/calendario',
+        cta: 'Abrir calendario',
+      },
+      {
+        titulo: 'Publica devocionales',
+        detalle:
+          'Puedes compartir reflexiones con el instituto, con una imagen si quieres acompañarlas.',
+        to: '/devocionales',
+        cta: 'Ir a devocionales',
+      },
+      {
         titulo: 'Revisa tus mensajes y tareas administrativas',
         detalle:
           '"Comunicación" es para hablar con administración y con el líder de tu diplomado. "Tareas" son encargos administrativos que te asignan, distintos de las tareas académicas.',
@@ -251,6 +290,20 @@ export const GUIAS = {
         titulo: 'Consulta tus notas y tu asistencia',
         detalle:
           'Ves tus notas cuando el docente las publica, y tu asistencia registrada módulo por módulo.',
+      },
+      {
+        titulo: 'Mira el calendario para organizarte',
+        detalle:
+          'Ahí están tus clases, las fechas de entrega, el cierre de los exámenes y los eventos del instituto, cada cosa con su color. Puedes verlo por mes, por semana o por año.',
+        to: '/calendario',
+        cta: 'Abrir calendario',
+      },
+      {
+        titulo: 'Sigue la agenda y los devocionales',
+        detalle:
+          'En "Agenda" están los eventos del instituto con su afiche, y en "Devocionales" las reflexiones que publica el equipo.',
+        to: '/agenda',
+        cta: 'Ver la agenda',
       },
       {
         titulo: 'Reporta tus pagos',

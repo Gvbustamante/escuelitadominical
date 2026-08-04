@@ -31,6 +31,9 @@ const CertificadosLider = lazy(() => import('./features/certificados/pages/Certi
 const MisCertificados = lazy(() => import('./features/certificados/pages/MisCertificados'))
 const CertificadoDetalle = lazy(() => import('./features/certificados/pages/CertificadoDetalle'))
 const Ayuda = lazy(() => import('./features/ayuda/pages/Ayuda'))
+const Agenda = lazy(() => import('./features/eventos/pages/Agenda'))
+const Devocionales = lazy(() => import('./features/devocionales/pages/Devocionales'))
+const Calendario = lazy(() => import('./features/calendario/pages/Calendario'))
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -111,6 +114,30 @@ export default function App() {
             element={
               <ProtectedRoute roles={TODOS}>
                 <Ayuda />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/agenda"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <Agenda />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/devocionales"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <Devocionales />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calendario"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <Calendario />
               </ProtectedRoute>
             }
           />

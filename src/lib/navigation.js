@@ -2,10 +2,17 @@ import { ROLES } from './roles'
 
 // Se amplía fase a fase, junto con las rutas correspondientes en App.jsx.
 // icon: nombre de icono en components/ui/Icon.jsx
+//
+// El orden importa: en teléfono, Layout.jsx pone los 4 primeros ítems en la barra inferior y
+// el resto dentro de "Más". Por eso lo más usado por cada rol va primero, y Ayuda siempre al
+// final.
 export const NAV_ITEMS = {
   [ROLES.ADMINISTRADOR]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Diplomados', icon: 'book' },
+    { to: '/calendario', label: 'Calendario', icon: 'calendar' },
+    { to: '/agenda', label: 'Agenda', icon: 'image' },
+    { to: '/devocionales', label: 'Devocionales', icon: 'sun' },
     { to: '/financiero', label: 'Financiero', icon: 'cash' },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
@@ -17,6 +24,9 @@ export const NAV_ITEMS = {
   [ROLES.LIDER]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mi diplomado', icon: 'book' },
+    { to: '/calendario', label: 'Calendario', icon: 'calendar' },
+    { to: '/agenda', label: 'Agenda', icon: 'image' },
+    { to: '/devocionales', label: 'Devocionales', icon: 'sun' },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
@@ -25,7 +35,10 @@ export const NAV_ITEMS = {
   ],
   [ROLES.DOCENTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
+    { to: '/calendario', label: 'Calendario', icon: 'calendar' },
+    { to: '/devocionales', label: 'Devocionales', icon: 'sun' },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
+    { to: '/agenda', label: 'Agenda', icon: 'image' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
@@ -33,6 +46,9 @@ export const NAV_ITEMS = {
   [ROLES.ESTUDIANTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/diplomados', label: 'Mis diplomados', icon: 'book' },
+    { to: '/calendario', label: 'Calendario', icon: 'calendar' },
+    { to: '/devocionales', label: 'Devocionales', icon: 'sun' },
+    { to: '/agenda', label: 'Agenda', icon: 'image' },
     { to: '/mis-pagos', label: 'Mis pagos', icon: 'cash' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/certificados', label: 'Certificados', icon: 'award' },

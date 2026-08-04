@@ -5,6 +5,7 @@ import { ROLES, ROLE_LABELS } from '../lib/roles'
 import Spinner from '../components/Spinner'
 import StatTile from '../components/ui/StatTile'
 import { statsAdministrador, statsLider, statsDocente, statsEstudiante } from '../features/dashboard/api'
+import BannerEvento from '../features/eventos/components/BannerEvento'
 
 export default function Home() {
   const { profile, institucion } = useAuth()
@@ -16,6 +17,8 @@ export default function Home() {
         <h1 className="text-2xl font-semibold text-ink">Hola, {primerNombre}</h1>
         <p className="text-sm text-ink-soft">{ROLE_LABELS[profile?.role]} en {institucion?.nombre || 'tu instituto'}.</p>
       </div>
+
+      <BannerEvento />
 
       {profile?.role === ROLES.ADMINISTRADOR && <DashboardAdministrador />}
       {profile?.role === ROLES.LIDER && <DashboardLider />}
