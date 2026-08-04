@@ -25,6 +25,7 @@ refleja aquí (no es un plan aspiracional, es el estado verdadero del código).
 | 16 | Tareas de gestión acotadas a la jerarquía: el líder solo asigna y ve las de los docentes de su diplomado | ✅ Completada |
 | 16b | Arreglo del centro de comunicación: era imposible crear una conversación (RETURNING sin fila visible + `puede_conversar(yo, yo)` falso) | ✅ Completada |
 | 17 | Renombrado a CELM (código `celm`), apartado de Programas (alta de programa + su primer administrador) y horario del líder con detección de choques | ✅ Completada |
+| 17c | Auditoría de fallos dormidos: `emitir_certificado` no validaba programa ni matrícula, y ninguna FK obligaba a que el referenciado fuera del mismo programa (ahora disparadores `validar_tenant_*`) | ✅ Corregida |
 | 17b | **Aislamiento entre programas**: `es_administrador()` se usaba sin atarlo a la institución de la fila, y al existir un segundo programa quedó como fuga real de datos entre tenants | ✅ Corregida |
 
 ## Próximos pasos recomendados (post-MVP, no bloqueantes)
