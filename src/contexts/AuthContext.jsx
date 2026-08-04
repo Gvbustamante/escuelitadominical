@@ -29,10 +29,20 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      loadProfile(session?.user?.id).finally(() => setLoading(false))
-    })
+    // Sin .catch()/.finally() aquí, cualquier falla al obtener la sesión inicial (ej. un
+    // token de sesión corrupto o vencido guardado en el navegador de una app anterior en el
+    // mismo dominio) dejaba `loading` en true para siempre: pantalla de carga infinita.
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSession(session)
+        return loadProfile(session?.user?.id)
+      })
+      .catch((err) => {
+        console.error('No se pudo obtener la sesión inicial:', err)
+        setSession(null)
+      })
+      .finally(() => setLoading(false))
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
