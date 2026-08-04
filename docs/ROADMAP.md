@@ -20,6 +20,7 @@ refleja aquí (no es un plan aspiracional, es el estado verdadero del código).
 | 11 | Certificados con QR + verificación pública | ✅ Completada |
 | 12 | Dashboards por rol | ✅ Completada |
 | 13 | Pulido, QA, documentación final | ✅ Completada (ver "Próximos pasos") |
+| 14 | Sección de Ayuda por rol: checklist de puesta en marcha (administrador) + guías de uso (líder/docente/estudiante) | ✅ Completada |
 
 ## Próximos pasos recomendados (post-MVP, no bloqueantes)
 

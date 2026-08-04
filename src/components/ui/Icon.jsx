@@ -28,6 +28,7 @@ const PATHS = {
   'check-circle': 'M9 12l2 2 4-4M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
   'alert-triangle': 'M12 9v4m0 4h.01M10.3 3.9 2.5 17a1 1 0 0 0 .9 1.5h17.2a1 1 0 0 0 .9-1.5L13.7 3.9a1 1 0 0 0-1.7 0Z',
   clock: 'M12 7v5l3 3M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
+  'help-circle': 'M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.5.2-.8.7-.8 1.2v.4m0 3h.01M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z',
 }
 
 export default function Icon({ name, className = 'h-5 w-5', strokeWidth = 1.75 }) {

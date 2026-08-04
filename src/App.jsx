@@ -30,6 +30,7 @@ const CertificadosAdmin = lazy(() => import('./features/certificados/pages/Certi
 const CertificadosLider = lazy(() => import('./features/certificados/pages/CertificadosLider'))
 const MisCertificados = lazy(() => import('./features/certificados/pages/MisCertificados'))
 const CertificadoDetalle = lazy(() => import('./features/certificados/pages/CertificadoDetalle'))
+const Ayuda = lazy(() => import('./features/ayuda/pages/Ayuda'))
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -102,6 +103,14 @@ export default function App() {
             element={
               <ProtectedRoute roles={TODOS}>
                 <Biblioteca />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/ayuda"
+            element={
+              <ProtectedRoute roles={TODOS}>
+                <Ayuda />
               </ProtectedRoute>
             }
           />
