@@ -1,5 +1,6 @@
 import { supabase } from '../../lib/supabaseClient'
 import { subirArchivo, urlFirmada, slugArchivo } from '../../lib/storage'
+import { ROLES } from '../../lib/roles'
 
 const BUCKET = 'tareas-gestion'
 
@@ -12,10 +13,42 @@ export async function listarTareas() {
   return data
 }
 
-export async function listarResponsablesDisponibles() {
-  const { data, error } = await supabase.from('profiles').select('id, nombre_completo, role').in('role', ['administrador', 'lider', 'docente']).order('nombre_completo')
+// A quién puede asignarle tareas quien está mirando la pantalla. La RLS ya rechaza un
+// responsable fuera de alcance, pero ofrecerlo en el desplegable sería mentirle al usuario:
+// elegiría a alguien y el guardado fallaría.
+//
+// El administrador manda sobre todo el staff. El líder solo sobre los docentes de su propio
+// diplomado, así que se parte de sus módulos y no de la lista de perfiles.
+export async function listarResponsablesDisponibles(role, profileId) {
+  if (role === ROLES.LIDER) return listarDocentesDeMiDiplomado(profileId)
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, nombre_completo, role')
+    .in('role', ['administrador', 'lider', 'docente'])
+    .order('nombre_completo')
   if (error) throw error
   return data
+}
+
+async function listarDocentesDeMiDiplomado(liderId) {
+  const { data: diplomado, error: errorDiplomado } = await supabase
+    .from('diplomados').select('id').eq('lider_id', liderId).maybeSingle()
+  if (errorDiplomado) throw errorDiplomado
+  if (!diplomado) return []
+
+  const { data, error } = await supabase
+    .from('modulo_docentes')
+    .select('docente:profiles!modulo_docentes_docente_id_fkey (id, nombre_completo, role), modulo:modulos!inner (diplomado_id)')
+    .eq('modulo.diplomado_id', diplomado.id)
+  if (error) throw error
+
+  // Un docente puede dictar varios módulos del mismo diplomado: se deduplica por id.
+  const porId = new Map()
+  for (const fila of data) {
+    if (fila.docente) porId.set(fila.docente.id, fila.docente)
+  }
+  return [...porId.values()].sort((a, b) => a.nombre_completo.localeCompare(b.nombre_completo))
 }
 
 export async function crearTarea({ institucionId, titulo, descripcion, responsableId, asignadoPor, prioridad, fechaLimite }) {

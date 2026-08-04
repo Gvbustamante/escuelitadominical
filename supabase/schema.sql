@@ -742,6 +742,26 @@ begin
 end;
 $$;
 
+-- El líder manda sobre los docentes de su propio diplomado y sobre nadie más — misma regla
+-- que rige el resto del sistema. Sin esto, la RLS de tareas_gestion se conformaba con
+-- mi_rol() in ('administrador','lider') y dejaba a un líder asignar tareas a docentes de otros
+-- diplomados, a otros líderes o al administrador, además de leer todas las tareas del tenant.
+create or replace function public.es_docente_de_mi_diplomado(p_profile_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.diplomados d
+    join public.modulos m on m.diplomado_id = d.id
+    join public.modulo_docentes md on md.modulo_id = m.id
+    where d.lider_id = auth.uid() and md.docente_id = p_profile_id
+  );
+$$;
+
+-- Una sola definición de "puedo ver esta tarea", reutilizada por las tablas satélite
+-- (archivos, comentarios, historial) y por el bucket de storage, para que no vuelvan a
+-- divergir como pasaba cuando cada política repetía la condición a mano.
 create or replace function public.puede_ver_tarea_gestion(p_tarea_id uuid)
 returns boolean
 language sql stable security definer set search_path = public
@@ -749,8 +769,13 @@ as $$
   select exists (
     select 1 from public.tareas_gestion t
     where t.id = p_tarea_id
-      and (t.responsable_id = auth.uid() or t.asignado_por = auth.uid() or public.mi_rol() in ('administrador','lider'))
       and t.institucion_id = public.mi_institucion()
+      and (
+        t.responsable_id = auth.uid()
+        or t.asignado_por = auth.uid()
+        or public.es_administrador()
+        or (public.mi_rol() = 'lider' and public.es_docente_de_mi_diplomado(t.responsable_id))
+      )
   );
 $$;
 
@@ -1148,17 +1173,29 @@ create policy "administrador gestiona ofrendas" on public.ofrendas for all to au
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
 
 -- COMUNICACIÓN
+-- El creador entra en la política de lectura además de los participantes. No es un permiso
+-- extra: es lo que hace posible crear la conversación. En el momento del INSERT todavía no
+-- hay participantes (se insertan en el paso siguiente), así que con solo es_participante(id)
+-- el RETURNING de `insert(...).select()` no encontraba fila visible y Postgres rechazaba la
+-- operación entera — el centro de comunicación quedaba inutilizable para todos los roles.
 create policy "leer mis conversaciones" on public.conversaciones for select to authenticated
-  using (public.es_participante(id));
+  using (public.es_participante(id) or created_by = (select auth.uid()));
 create policy "crear conversacion" on public.conversaciones for insert to authenticated
   with check (institucion_id = public.mi_institucion() and created_by = (select auth.uid()));
 
 create policy "leer participantes de mis conversaciones" on public.conversacion_participantes for select to authenticated
   using (public.es_participante(conversacion_id));
+-- Agregarse a uno mismo no pasa por puede_conversar: esa función valida PARES de roles
+-- distintos y devuelve false para (yo, yo) en los cuatro roles, así que exigirla también para
+-- la fila del creador impedía que nadie pudiera unirse a su propia conversación. El par se
+-- valida donde importa, al agregar a la otra persona.
 create policy "agregar participantes validos" on public.conversacion_participantes for insert to authenticated
   with check (
     exists (select 1 from public.conversaciones c where c.id = conversacion_id and c.created_by = (select auth.uid()))
-    and public.puede_conversar((select auth.uid()), profile_id)
+    and (
+      profile_id = (select auth.uid())
+      or public.puede_conversar((select auth.uid()), profile_id)
+    )
   );
 create policy "salir de una conversacion" on public.conversacion_participantes for delete to authenticated
   using (profile_id = (select auth.uid()));
@@ -1182,26 +1219,41 @@ create policy "marcar mensaje como leido" on public.mensaje_lecturas for insert 
 
 -- TAREAS DE GESTIÓN
 create policy "leer tareas de gestion accesibles" on public.tareas_gestion for select to authenticated
-  using (institucion_id = public.mi_institucion() and (responsable_id = (select auth.uid()) or asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider')));
+  using (
+    institucion_id = public.mi_institucion()
+    and (
+      responsable_id = (select auth.uid())
+      or asignado_por = (select auth.uid())
+      or public.es_administrador()
+      or (public.mi_rol() = 'lider' and public.es_docente_de_mi_diplomado(responsable_id))
+    )
+  );
 create policy "administrador y lider asignan tareas de gestion" on public.tareas_gestion for insert to authenticated
-  with check (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider') and asignado_por = (select auth.uid()));
+  with check (
+    institucion_id = public.mi_institucion()
+    and asignado_por = (select auth.uid())
+    and (
+      public.es_administrador()
+      or (public.mi_rol() = 'lider' and public.es_docente_de_mi_diplomado(responsable_id))
+    )
+  );
 create policy "actualizar tarea de gestion" on public.tareas_gestion for update to authenticated
   using (responsable_id = (select auth.uid()) or asignado_por = (select auth.uid()) or public.mi_rol() = 'administrador');
 create policy "administrador elimina tareas de gestion" on public.tareas_gestion for delete to authenticated
   using (public.mi_rol() = 'administrador' and institucion_id = public.mi_institucion());
 
 create policy "leer archivos de tarea de gestion accesible" on public.tareas_gestion_archivos for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_archivos.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
+  using (public.puede_ver_tarea_gestion(tarea_id));
 create policy "adjuntar archivo a tarea de gestion accesible" on public.tareas_gestion_archivos for insert to authenticated
-  with check (subido_por = (select auth.uid()) and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
+  with check (subido_por = (select auth.uid()) and public.puede_ver_tarea_gestion(tarea_id));
 
 create policy "leer comentarios de tarea de gestion accesible" on public.tareas_gestion_comentarios for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_comentarios.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
+  using (public.puede_ver_tarea_gestion(tarea_id));
 create policy "comentar tarea de gestion accesible" on public.tareas_gestion_comentarios for insert to authenticated
-  with check (autor_id = (select auth.uid()) and exists (select 1 from public.tareas_gestion t where t.id = tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
+  with check (autor_id = (select auth.uid()) and public.puede_ver_tarea_gestion(tarea_id));
 
 create policy "leer historial de tarea de gestion accesible" on public.tareas_gestion_historial for select to authenticated
-  using (exists (select 1 from public.tareas_gestion t where t.id = tareas_gestion_historial.tarea_id and (t.responsable_id = (select auth.uid()) or t.asignado_por = (select auth.uid()) or public.mi_rol() in ('administrador','lider'))));
+  using (public.puede_ver_tarea_gestion(tarea_id));
 create policy "insertar historial de tarea de gestion" on public.tareas_gestion_historial for insert to authenticated
   with check (cambiado_por = (select auth.uid()));
 
@@ -1569,6 +1621,8 @@ revoke all on function public.puede_gestionar_modulo(uuid) from public, anon;
 revoke all on function public.puede_conversar(uuid, uuid) from public, anon;
 revoke all on function public.puede_ver_tarea_gestion(uuid) from public, anon;
 grant execute on function public.puede_ver_tarea_gestion(uuid) to authenticated;
+revoke all on function public.es_docente_de_mi_diplomado(uuid) from public, anon;
+grant execute on function public.es_docente_de_mi_diplomado(uuid) to authenticated;
 revoke all on function public.es_participante(uuid) from public, anon;
 revoke all on function public.institucion_de_diplomado(uuid) from public, anon;
 revoke all on function public.institucion_de_modulo(uuid) from public, anon;
