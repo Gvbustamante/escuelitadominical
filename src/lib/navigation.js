@@ -12,6 +12,7 @@ export const NAV_ITEMS = {
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/certificados', label: 'Certificados', icon: 'award' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
+    { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
   ],
   [ROLES.LIDER]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
@@ -20,12 +21,14 @@ export const NAV_ITEMS = {
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/certificados', label: 'Certificados', icon: 'award' },
+    { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
   ],
   [ROLES.DOCENTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
     { to: '/comunicacion', label: 'Comunicación', icon: 'chat' },
     { to: '/tareas-gestion', label: 'Tareas', icon: 'check-square' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
+    { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
   ],
   [ROLES.ESTUDIANTE]: [
     { to: '/', label: 'Inicio', icon: 'home', end: true },
@@ -33,6 +36,7 @@ export const NAV_ITEMS = {
     { to: '/mis-pagos', label: 'Mis pagos', icon: 'cash' },
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/certificados', label: 'Certificados', icon: 'award' },
+    { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
   ],
 }
 
