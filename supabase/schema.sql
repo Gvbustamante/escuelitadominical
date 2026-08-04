@@ -1319,6 +1319,81 @@ create policy "administrador lee auditoria de su institucion" on public.auditori
   using (institucion_id = public.mi_institucion() and public.es_administrador());
 
 -- ============================================================
+-- 14b. INTEGRIDAD ENTRE PROGRAMAS
+-- ============================================================
+-- Una clave foránea a profiles garantiza que el perfil existe, no que sea del mismo programa.
+-- Estos disparadores lo garantizan en la base, de forma que ni una política RLS mal escrita ni
+-- una función security definer futura puedan cruzar programas por descuido. Es la red que
+-- faltaba cuando se descubrió que es_administrador() se usaba sin acotar por institución.
+create or replace function public.perfil_en_institucion(p_profile_id uuid, p_institucion_id uuid)
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select p_profile_id is null or exists (
+    select 1 from public.profiles where id = p_profile_id and institucion_id = p_institucion_id
+  );
+$$;
+revoke all on function public.perfil_en_institucion(uuid, uuid) from public, anon;
+
+create or replace function public.validar_tenant_diplomado()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.perfil_en_institucion(new.lider_id, new.institucion_id) then
+    raise exception 'El líder debe pertenecer al mismo programa que el diplomado';
+  end if;
+  return new;
+end $$;
+create trigger trg_tenant_diplomados before insert or update on public.diplomados
+  for each row execute function public.validar_tenant_diplomado();
+
+create or replace function public.validar_tenant_modulo_docente()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.perfil_en_institucion(new.docente_id, public.institucion_de_modulo(new.modulo_id)) then
+    raise exception 'El docente debe pertenecer al mismo programa que el módulo';
+  end if;
+  return new;
+end $$;
+create trigger trg_tenant_modulo_docentes before insert or update on public.modulo_docentes
+  for each row execute function public.validar_tenant_modulo_docente();
+
+create or replace function public.validar_tenant_matricula()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.perfil_en_institucion(new.estudiante_id, public.institucion_de_diplomado(new.diplomado_id)) then
+    raise exception 'El estudiante debe pertenecer al mismo programa que el diplomado';
+  end if;
+  return new;
+end $$;
+create trigger trg_tenant_matriculas before insert or update on public.matriculas
+  for each row execute function public.validar_tenant_matricula();
+
+create or replace function public.validar_tenant_certificado()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.perfil_en_institucion(new.estudiante_id, new.institucion_id) then
+    raise exception 'El estudiante debe pertenecer al mismo programa que el certificado';
+  end if;
+  if public.institucion_de_diplomado(new.diplomado_id) is distinct from new.institucion_id then
+    raise exception 'El diplomado debe pertenecer al mismo programa que el certificado';
+  end if;
+  return new;
+end $$;
+create trigger trg_tenant_certificados before insert or update on public.certificados
+  for each row execute function public.validar_tenant_certificado();
+
+create or replace function public.validar_tenant_tarea_gestion()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if not public.perfil_en_institucion(new.responsable_id, new.institucion_id) then
+    raise exception 'El responsable debe pertenecer al mismo programa que la tarea';
+  end if;
+  return new;
+end $$;
+create trigger trg_tenant_tareas_gestion before insert or update on public.tareas_gestion
+  for each row execute function public.validar_tenant_tarea_gestion();
+
+-- ============================================================
 -- 15. STORAGE (buckets y políticas)
 -- ============================================================
 
@@ -1686,6 +1761,43 @@ declare
 begin
   if not public.es_administrador() then
     raise exception 'No autorizado';
+  end if;
+
+  -- Esta función es security definer: se salta la RLS, así que tiene que validar por su cuenta
+  -- que todo lo que referencia sea de este programa. Sin estos chequeos, un administrador podía
+  -- emitir un diploma —con su QR público verificable— sobre el estudiante o el diplomado de otro
+  -- programa, o sobre alguien que nunca cursó.
+  if not exists (
+    select 1 from public.diplomados d
+    where d.id = p_diplomado_id and d.institucion_id = v_institucion
+  ) then
+    raise exception 'El diplomado no pertenece a este programa';
+  end if;
+
+  if not exists (
+    select 1 from public.profiles p
+    where p.id = p_estudiante_id and p.institucion_id = v_institucion and p.role = 'estudiante'
+  ) then
+    raise exception 'El estudiante no pertenece a este programa';
+  end if;
+
+  if p_plantilla_id is not null and not exists (
+    select 1 from public.plantillas_certificado pc
+    where pc.id = p_plantilla_id and pc.institucion_id = v_institucion
+  ) then
+    raise exception 'La plantilla no pertenece a este programa';
+  end if;
+
+  -- No se exige estado 'completada' para no imponer un flujo que el instituto quizá no lleve al
+  -- día, pero sí que exista matrícula y no sea un retiro: certificar a quien nunca cursó, o a
+  -- quien se retiró, es justo lo que un diploma no debe poder decir.
+  if not exists (
+    select 1 from public.matriculas m
+    where m.diplomado_id = p_diplomado_id
+      and m.estudiante_id = p_estudiante_id
+      and m.estado in ('activa','completada')
+  ) then
+    raise exception 'El estudiante no está matriculado en ese diplomado';
   end if;
 
   insert into public.certificados (institucion_id, estudiante_id, diplomado_id, plantilla_id, emitido_por)
