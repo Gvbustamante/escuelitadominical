@@ -1173,17 +1173,29 @@ create policy "administrador gestiona ofrendas" on public.ofrendas for all to au
   with check (institucion_id = public.mi_institucion() and public.es_administrador());
 
 -- COMUNICACIÓN
+-- El creador entra en la política de lectura además de los participantes. No es un permiso
+-- extra: es lo que hace posible crear la conversación. En el momento del INSERT todavía no
+-- hay participantes (se insertan en el paso siguiente), así que con solo es_participante(id)
+-- el RETURNING de `insert(...).select()` no encontraba fila visible y Postgres rechazaba la
+-- operación entera — el centro de comunicación quedaba inutilizable para todos los roles.
 create policy "leer mis conversaciones" on public.conversaciones for select to authenticated
-  using (public.es_participante(id));
+  using (public.es_participante(id) or created_by = (select auth.uid()));
 create policy "crear conversacion" on public.conversaciones for insert to authenticated
   with check (institucion_id = public.mi_institucion() and created_by = (select auth.uid()));
 
 create policy "leer participantes de mis conversaciones" on public.conversacion_participantes for select to authenticated
   using (public.es_participante(conversacion_id));
+-- Agregarse a uno mismo no pasa por puede_conversar: esa función valida PARES de roles
+-- distintos y devuelve false para (yo, yo) en los cuatro roles, así que exigirla también para
+-- la fila del creador impedía que nadie pudiera unirse a su propia conversación. El par se
+-- valida donde importa, al agregar a la otra persona.
 create policy "agregar participantes validos" on public.conversacion_participantes for insert to authenticated
   with check (
     exists (select 1 from public.conversaciones c where c.id = conversacion_id and c.created_by = (select auth.uid()))
-    and public.puede_conversar((select auth.uid()), profile_id)
+    and (
+      profile_id = (select auth.uid())
+      or public.puede_conversar((select auth.uid()), profile_id)
+    )
   );
 create policy "salir de una conversacion" on public.conversacion_participantes for delete to authenticated
   using (profile_id = (select auth.uid()));
