@@ -37,6 +37,9 @@ Acotado **exclusivamente a su propio diplomado** (`diplomados.lider_id = auth.ui
 - Asigna módulos, horarios, revisa tareas/asistencia/calificaciones, aprueba procesos
   académicos (publicar calificación final, aprobar retiro de estudiante, etc.).
 - Comunicación con administrador y con los docentes de su diplomado.
+- Asigna tareas de gestión **únicamente a los docentes de su propio diplomado** (los asignados
+  a alguno de sus módulos), y solo ve esas tareas más las suyas propias. No puede asignarle
+  tareas a otro líder, a un administrador ni a un docente de otro diplomado.
 - Nunca ve ni administra otro diplomado.
 
 ## Docente
@@ -45,6 +48,9 @@ Acotado a los módulos donde aparece en `modulo_docentes`:
 - Crea clases (contenido de módulo): videos, PDF, diapositivas, recursos.
 - Crea tareas y exámenes, califica, registra asistencia, sube evidencias de salón.
 - Consulta mensajes (con administrador y con el líder del diplomado del módulo que enseña).
+- Recibe y actualiza tareas de gestión, pero **no las asigna**: el trabajo que le pone a sus
+  estudiantes va por `tareas_academicas`, que es el sistema hecho para eso (con entrega de
+  archivo, fecha límite y calificación).
 - No administra diplomados ni módulos que no le fueron asignados.
 
 ## Estudiante
@@ -85,7 +91,7 @@ conversación en la UI.
 | Evidencias | Ver todo | Ver del propio diplomado | Crear en sus módulos | — |
 | Financiero | CRUD, aprobar | Ver del propio diplomado (solo lectura) | — | Ver propio estado de cuenta, subir comprobante |
 | Comunicación | admin↔líder, admin↔docente | líder↔admin, líder↔docente(propio) | docente↔admin, docente↔líder(propio) | — |
-| Tareas de gestión | Asignar/ver todas | Asignar/ver del propio diplomado | Ver/actualizar las propias | — |
+| Tareas de gestión | Asignar/ver todas | Asignar y ver **solo las de los docentes de su diplomado** (más las suyas) | Ver/actualizar las propias; no asigna | — |
 | Biblioteca institucional | CRUD | Ver/descargar | Ver/descargar | Ver/descargar (si aplica) |
 | Agenda de eventos | CRUD | CRUD | Ver | Ver (solo los marcados para todo el instituto) |
 | Devocionales | CRUD | CRUD | CRUD | Ver |

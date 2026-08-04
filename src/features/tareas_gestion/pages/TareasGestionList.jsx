@@ -82,11 +82,11 @@ function NuevaTareaModal({ onClose }) {
   const [fechaLimite, setFechaLimite] = useState('')
 
   useEffect(() => {
-    listarResponsablesDisponibles().then((data) => {
+    listarResponsablesDisponibles(profile.role, profile.id).then((data) => {
       setResponsables(data)
       if (data[0]) setResponsableId(data[0].id)
     })
-  }, [])
+  }, [profile.role, profile.id])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -101,6 +101,17 @@ function NuevaTareaModal({ onClose }) {
     <Modal open onClose={onClose} title="Asignar tarea">
       {responsables === null ? (
         <Spinner />
+      ) : responsables.length === 0 ? (
+        // Le pasa a un líder que todavía no tiene docentes asignados a los módulos de su
+        // diplomado: solo puede asignarles tareas a ellos, así que no hay a quién elegir.
+        // Sin este aviso vería un desplegable vacío y el guardado fallaría contra la RLS.
+        <div className="flex flex-col gap-3 py-2 text-center">
+          <p className="text-sm text-ink-soft">
+            Todavía no tienes a quién asignarle tareas. Asigna docentes a los módulos de tu
+            diplomado y aparecerán aquí.
+          </p>
+          <button className="btn-secondary justify-center" onClick={onClose}>Entendido</button>
+        </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <div>

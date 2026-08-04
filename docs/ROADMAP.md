@@ -22,6 +22,7 @@ refleja aquí (no es un plan aspiracional, es el estado verdadero del código).
 | 13 | Pulido, QA, documentación final | ✅ Completada (ver "Próximos pasos") |
 | 14 | Sección de Ayuda por rol: checklist de puesta en marcha (administrador) + guías de uso (líder/docente/estudiante) | ✅ Completada |
 | 15 | Devocionales con imagen, agenda de eventos con afiche + banner destacado en el inicio, y calendario mes/semana/año con colores por fuente | ✅ Completada |
+| 16 | Tareas de gestión acotadas a la jerarquía: el líder solo asigna y ve las de los docentes de su diplomado | ✅ Completada |
 
 ## Próximos pasos recomendados (post-MVP, no bloqueantes)
 
