@@ -1,4 +1,4 @@
-# Roles y permisos — CELM · La Cosecha
+# Roles y permisos
 
 Cuatro roles fijos, jerarquía estricta, aislados por `institucion_id`. Esta tabla es el
 contrato que implementan las políticas RLS en `supabase/schema.sql`; cualquier cambio de

@@ -1,4 +1,4 @@
-# Modelo de datos — CELM · La Cosecha
+# Modelo de datos 
 
 Fuente de verdad ejecutable: `supabase/schema.sql`. Este documento es el mapa de lectura.
 Todas las tablas de negocio llevan `institucion_id` (aislamiento multi-tenant) salvo donde se

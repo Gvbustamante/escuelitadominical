@@ -1,5 +1,5 @@
 -- ============================================================
--- CELM · La Cosecha — alta de una nueva institución + su primer administrador
+-- Alta de un programa nuevo + su primer administrador (equivalente SQL de crear_programa)
 -- Requiere haber ejecutado antes supabase/schema.sql en el mismo proyecto.
 -- Se ejecuta como superusuario (SQL Editor de Supabase), UNA vez por institución nueva.
 -- Edita los valores marcados con CAMBIAR antes de correrlo.

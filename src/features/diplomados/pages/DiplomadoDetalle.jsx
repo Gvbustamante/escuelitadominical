@@ -10,6 +10,7 @@ import { ROLES } from '../../../lib/roles'
 import { obtenerDiplomado } from '../api'
 import { listarModulosPorDiplomado } from '../../modulos/api'
 import MatriculaPanel from '../../matriculas/components/MatriculaPanel'
+import HorarioPanel from '../../horario/components/HorarioPanel'
 
 const ESTADO_LABEL = {
   planificacion: 'En planificación',
@@ -64,6 +65,8 @@ export default function DiplomadoDetalle() {
       <div className="mb-4 flex gap-2 border-b border-slate-200">
         {[
           { key: 'modulos', label: 'Módulos' },
+          // El horario es una herramienta de organización: solo la ve quien puede cambiarlo.
+          ...(puedeGestionar ? [{ key: 'horario', label: 'Horario' }] : []),
           ...(profile?.role !== ROLES.ESTUDIANTE ? [{ key: 'matricula', label: 'Estudiantes matriculados' }] : []),
         ].map((t) => (
           <button
@@ -107,6 +110,7 @@ export default function DiplomadoDetalle() {
         </div>
       )}
 
+      {tab === 'horario' && puedeGestionar && <HorarioPanel diplomadoId={id} puedeGestionar={puedeGestionar} />}
       {tab === 'matricula' && <MatriculaPanel diplomadoId={id} puedeGestionar={puedeGestionar} />}
     </div>
   )

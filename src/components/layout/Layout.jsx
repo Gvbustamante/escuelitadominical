@@ -21,7 +21,7 @@ export default function Layout() {
       <aside className="hidden shrink-0 flex-col border-r border-slate-200 bg-surface-raised md:flex md:w-16 lg:w-60">
         <div className="flex h-16 items-center gap-2.5 border-b border-slate-100 px-4 lg:px-5">
           <AppLogo className="h-8 w-8 shrink-0 object-contain rounded-md" />
-          <span className="hidden truncate text-sm font-semibold text-ink lg:block">{institucion?.nombre || 'CELM · La Cosecha'}</span>
+          <span className="hidden truncate text-sm font-semibold text-ink lg:block">{institucion?.nombre || 'Plataforma académica'}</span>
         </div>
 
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">

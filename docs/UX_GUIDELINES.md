@@ -1,4 +1,4 @@
-# Guía de UX/UI — CELM · La Cosecha
+# Guía de UX/UI 
 
 ## Principios
 
