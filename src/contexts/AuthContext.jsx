@@ -29,33 +29,31 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    // Sin .catch()/.finally() aquí, cualquier falla al obtener la sesión inicial (ej. un
-    // token de sesión corrupto o vencido guardado en el navegador de una app anterior en el
-    // mismo dominio) dejaba `loading` en true para siempre: pantalla de carga infinita.
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSession(session)
-        return loadProfile(session?.user?.id)
-      })
-      .catch((err) => {
-        console.error('No se pudo obtener la sesión inicial:', err)
-        setSession(null)
-      })
-      .finally(() => setLoading(false))
+    // Antes había además una llamada a supabase.auth.getSession() en el mount, en paralelo a
+    // este listener. supabase-js ya emite un evento INITIAL_SESSION aquí mismo al suscribirse,
+    // así que esa llamada extra era redundante — y peor, una carrera real: si el login se
+    // completaba antes de que esa promesa (lanzada al montar, con la sesión de ESE momento)
+    // resolviera, su callback llegaba tarde y pisaba el perfil recién cargado con null,
+    // dejando la pantalla trabada. Con un solo camino de eventos esa carrera desaparece.
+    let activo = true
+    const eventosConCargaVisible = new Set(['INITIAL_SESSION', 'SIGNED_IN', 'SIGNED_OUT'])
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true)
       setSession(session)
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setLoading(true)
-        loadProfile(session?.user?.id).finally(() => setLoading(false))
-      } else {
-        loadProfile(session?.user?.id)
-      }
+      const mostrarCarga = eventosConCargaVisible.has(event)
+      if (mostrarCarga) setLoading(true)
+      loadProfile(session?.user?.id)
+        .catch((err) => console.error('No se pudo cargar el perfil:', err))
+        .finally(() => {
+          if (activo && mostrarCarga) setLoading(false)
+        })
     })
 
-    return () => listener.subscription.unsubscribe()
+    return () => {
+      activo = false
+      listener.subscription.unsubscribe()
+    }
   }, [loadProfile])
 
   function buildEmail(identificador, institutoSlug) {
