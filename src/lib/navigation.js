@@ -19,6 +19,7 @@ export const NAV_ITEMS = {
     { to: '/biblioteca', label: 'Biblioteca', icon: 'folder' },
     { to: '/certificados', label: 'Certificados', icon: 'award' },
     { to: '/usuarios', label: 'Usuarios', icon: 'users' },
+    { to: '/programas', label: 'Programas', icon: 'building' },
     { to: '/ayuda', label: 'Ayuda', icon: 'help-circle' },
   ],
   [ROLES.LIDER]: [

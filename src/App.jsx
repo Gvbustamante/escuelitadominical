@@ -34,6 +34,7 @@ const Ayuda = lazy(() => import('./features/ayuda/pages/Ayuda'))
 const Agenda = lazy(() => import('./features/eventos/pages/Agenda'))
 const Devocionales = lazy(() => import('./features/devocionales/pages/Devocionales'))
 const Calendario = lazy(() => import('./features/calendario/pages/Calendario'))
+const Programas = lazy(() => import('./features/programas/pages/Programas'))
 
 const STAFF = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE]
 const TODOS = [ROLES.ADMINISTRADOR, ROLES.LIDER, ROLES.DOCENTE, ROLES.ESTUDIANTE]
@@ -60,6 +61,14 @@ export default function App() {
         >
           <Route path="/" element={<Home />} />
 
+          <Route
+            path="/programas"
+            element={
+              <ProtectedRoute roles={[ROLES.ADMINISTRADOR]}>
+                <Programas />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/usuarios"
             element={

@@ -37,7 +37,7 @@ export default function Login() {
       <div className="card w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2 text-center">
           <AppLogo institucion={institucion} className="h-14 w-14 object-contain rounded-lg" />
-          <h1 className="text-xl font-semibold text-ink">{institucion?.nombre || 'CELM · La Cosecha'}</h1>
+          <h1 className="text-xl font-semibold text-ink">{institucion?.nombre || 'Plataforma académica'}</h1>
           <p className="text-sm text-ink-soft">ERP académico para institutos bíblicos</p>
         </div>
 

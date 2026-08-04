@@ -1,4 +1,4 @@
-# Roadmap de implementación — CELM · La Cosecha
+# Roadmap de implementación
 
 Ejecución autónoma por fases. Cada fase se cierra con: diseño → implementación → build
 verificado → documentación actualizada. Estado real al final de cada sesión de trabajo se
@@ -24,6 +24,8 @@ refleja aquí (no es un plan aspiracional, es el estado verdadero del código).
 | 15 | Devocionales con imagen, agenda de eventos con afiche + banner destacado en el inicio, y calendario mes/semana/año con colores por fuente | ✅ Completada |
 | 16 | Tareas de gestión acotadas a la jerarquía: el líder solo asigna y ve las de los docentes de su diplomado | ✅ Completada |
 | 16b | Arreglo del centro de comunicación: era imposible crear una conversación (RETURNING sin fila visible + `puede_conversar(yo, yo)` falso) | ✅ Completada |
+| 17 | Renombrado a CELM (código `celm`), apartado de Programas (alta de programa + su primer administrador) y horario del líder con detección de choques | ✅ Completada |
+| 17b | **Aislamiento entre programas**: `es_administrador()` se usaba sin atarlo a la institución de la fila, y al existir un segundo programa quedó como fuga real de datos entre tenants | ✅ Corregida |
 
 ## Próximos pasos recomendados (post-MVP, no bloqueantes)
 

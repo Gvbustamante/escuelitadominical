@@ -1,5 +1,5 @@
 -- ============================================================
--- CELM · La Cosecha — esquema completo de base de datos
+-- Esquema completo de base de datos — plataforma académica multi-programa
 -- ERP académico multi-tenant para institutos bíblicos.
 -- Copia y pega TODO este archivo en Supabase → SQL Editor → Run.
 -- Se ejecuta UNA sola vez, en un proyecto de Supabase nuevo/vacío.
@@ -618,11 +618,17 @@ as $$
   );
 $$;
 
+-- OJO con la rama de administrador: es_administrador() solo responde "quien llama es
+-- administrador", no "es administrador DE ESTE módulo". Sin el chequeo de institución, un
+-- administrador de cualquier programa podía gestionar el contenido de los módulos de todos
+-- los demás — y esta función la usan recursos, tareas académicas, exámenes, asistencia,
+-- calificaciones, foro, evidencias y devocionales de módulo. Las ramas de líder y docente sí
+-- son seguras por sí solas: comparan contra auth.uid().
 create or replace function public.puede_gestionar_modulo(p_modulo_id uuid)
 returns boolean
 language sql stable security definer set search_path = public
 as $$
-  select public.es_administrador()
+  select (public.es_administrador() and public.institucion_de_modulo(p_modulo_id) = public.mi_institucion())
     or public.es_lider_de_modulo(p_modulo_id)
     or public.es_docente_de_modulo(p_modulo_id);
 $$;
@@ -923,7 +929,9 @@ create policy "administrador edita su institucion" on public.instituciones for u
 create policy "leer perfiles relacionados" on public.profiles for select to authenticated
   using (
     (select auth.uid()) = id
-    or public.es_administrador()
+    -- El chequeo de institución aquí no es redundante: sin él, un administrador de cualquier
+    -- programa leía los perfiles (nombre y documento de identidad incluidos) de todos los demás.
+    or (public.es_administrador() and institucion_id = public.mi_institucion())
     or (institucion_id = public.mi_institucion() and role = 'administrador')
     or (
       -- El líder necesita poder buscar docentes/estudiantes de su institución para
@@ -988,19 +996,32 @@ create policy "lider gestiona modulos de su diplomado" on public.modulos for all
 create policy "leer asignaciones docentes" on public.modulo_docentes for select to authenticated
   using (public.institucion_de_modulo(modulo_docentes.modulo_id) = public.mi_institucion());
 create policy "administrador y lider asignan docentes" on public.modulo_docentes for all to authenticated
-  using (public.es_administrador() or public.es_lider_de_modulo(modulo_id))
-  with check (public.es_administrador() or public.es_lider_de_modulo(modulo_id));
+  using (
+    (public.es_administrador() and public.institucion_de_modulo(modulo_id) = public.mi_institucion())
+    or public.es_lider_de_modulo(modulo_id)
+  )
+  with check (
+    (public.es_administrador() and public.institucion_de_modulo(modulo_id) = public.mi_institucion())
+    or public.es_lider_de_modulo(modulo_id)
+  );
 
 -- MATRICULAS
+-- matriculas no tiene institucion_id propia: se acota por el diplomado al que pertenece.
 create policy "leer matriculas accesibles" on public.matriculas for select to authenticated
   using (
     estudiante_id = (select auth.uid())
-    or public.mi_rol() = 'administrador'
+    or (public.es_administrador() and public.institucion_de_diplomado(diplomado_id) = public.mi_institucion())
     or public.es_lider_de_diplomado(diplomado_id)
   );
 create policy "administrador y lider gestionan matriculas" on public.matriculas for all to authenticated
-  using (public.es_administrador() or public.es_lider_de_diplomado(diplomado_id))
-  with check (public.es_administrador() or public.es_lider_de_diplomado(diplomado_id));
+  using (
+    (public.es_administrador() and public.institucion_de_diplomado(diplomado_id) = public.mi_institucion())
+    or public.es_lider_de_diplomado(diplomado_id)
+  )
+  with check (
+    (public.es_administrador() and public.institucion_de_diplomado(diplomado_id) = public.mi_institucion())
+    or public.es_lider_de_diplomado(diplomado_id)
+  );
 
 -- RECURSOS_MODULO
 create policy "leer recursos de modulo accesible" on public.recursos_modulo for select to authenticated
@@ -1138,9 +1159,15 @@ create policy "leer peticiones visibles" on public.peticiones_oracion for select
 create policy "crear peticion propia" on public.peticiones_oracion for insert to authenticated
   with check (autor_id = (select auth.uid()) and institucion_id = public.mi_institucion());
 create policy "actualizar o borrar peticion propia o staff" on public.peticiones_oracion for update to authenticated
-  using (autor_id = (select auth.uid()) or public.mi_rol() in ('administrador','lider'));
+  using (
+    autor_id = (select auth.uid())
+    or (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider'))
+  );
 create policy "borrar peticion propia o staff" on public.peticiones_oracion for delete to authenticated
-  using (autor_id = (select auth.uid()) or public.mi_rol() in ('administrador','lider'));
+  using (
+    autor_id = (select auth.uid())
+    or (institucion_id = public.mi_institucion() and public.mi_rol() in ('administrador','lider'))
+  );
 
 -- EVIDENCIAS_CLASE
 create policy "leer evidencias de mi modulo" on public.evidencias_clase for select to authenticated
@@ -1238,7 +1265,11 @@ create policy "administrador y lider asignan tareas de gestion" on public.tareas
     )
   );
 create policy "actualizar tarea de gestion" on public.tareas_gestion for update to authenticated
-  using (responsable_id = (select auth.uid()) or asignado_por = (select auth.uid()) or public.mi_rol() = 'administrador');
+  using (
+    responsable_id = (select auth.uid())
+    or asignado_por = (select auth.uid())
+    or (public.es_administrador() and institucion_id = public.mi_institucion())
+  );
 create policy "administrador elimina tareas de gestion" on public.tareas_gestion for delete to authenticated
   using (public.mi_rol() = 'administrador' and institucion_id = public.mi_institucion());
 
@@ -1473,6 +1504,115 @@ begin
 end;
 $$;
 
+-- Alta de un programa nuevo (ELID, Instituto Bíblico, el de otra iglesia…) junto con su primer
+-- administrador, de forma atómica. Antes esto solo se podía hacer entrando a la base con SQL.
+--
+-- Cruza el aislamiento por tenant a propósito: crea filas de OTRA institución, algo que ninguna
+-- política RLS permite ni debe permitir. Por eso es security definer y valida por su cuenta que
+-- quien llama sea administrador. Consecuencia a tener presente: cualquier administrador de
+-- cualquier programa puede crear programas nuevos — el rol de administrador es de confianza
+-- total en la instalación, no solo dentro de su programa.
+create or replace function public.crear_programa(
+  p_nombre text,
+  p_codigo text,
+  p_admin_nombre text,
+  p_admin_email text default null,
+  p_admin_documento text default null,
+  p_color_primario text default null,
+  p_color_secundario text default null
+)
+returns table (institucion_id uuid, codigo text, usuario text, password text)
+language plpgsql
+security definer
+set search_path = public, auth, extensions
+as $$
+declare
+  caller_role text;
+  v_codigo text := lower(trim(p_codigo));
+  v_nombre text := trim(p_nombre);
+  v_institucion_id uuid;
+  v_user_id uuid := gen_random_uuid();
+  v_documento text := nullif(trim(coalesce(p_admin_documento, '')), '');
+  v_email_real text := nullif(lower(trim(coalesce(p_admin_email, ''))), '');
+  v_email_login text;
+  v_password text;
+begin
+  select role into caller_role from public.profiles where id = auth.uid();
+  if caller_role is distinct from 'administrador' then
+    raise exception 'Solo un administrador puede crear programas';
+  end if;
+
+  if v_nombre is null or v_nombre = '' then
+    raise exception 'Falta el nombre del programa';
+  end if;
+
+  -- El código va en el correo interno de los usuarios (documento@codigo.celm.local) y en la
+  -- URL de acceso directo, así que se restringe a lo que es seguro en ambos sitios.
+  if v_codigo !~ '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$' then
+    raise exception 'El código solo admite minúsculas, números y guiones, y no puede empezar ni terminar en guión';
+  end if;
+
+  if exists (select 1 from public.instituciones where slug = v_codigo) then
+    raise exception 'Ya existe un programa con el código %', v_codigo;
+  end if;
+
+  if v_email_real is null and v_documento is null then
+    raise exception 'El primer administrador necesita un correo o un documento de identidad';
+  end if;
+
+  insert into public.instituciones (nombre, slug, color_primario, color_secundario)
+  values (
+    v_nombre, v_codigo,
+    coalesce(nullif(trim(coalesce(p_color_primario,'')), ''), '#2952e3'),
+    coalesce(nullif(trim(coalesce(p_color_secundario,'')), ''), '#0ea5a4')
+  )
+  returning id into v_institucion_id;
+
+  -- Con correo real entra con su correo; sin correo, con documento + código del programa.
+  v_email_login := coalesce(
+    v_email_real,
+    lower(regexp_replace(v_documento, '[^a-zA-Z0-9]', '', 'g')) || '@' || v_codigo || '.celm.local'
+  );
+
+  if exists (select 1 from auth.users where email = v_email_login) then
+    raise exception 'Ya existe una cuenta con el identificador %', v_email_login;
+  end if;
+
+  v_password := regexp_replace(encode(gen_random_bytes(6), 'base64'), '[^a-zA-Z0-9]', '', 'g') || 'X7';
+
+  insert into auth.users (
+    instance_id, id, aud, role, email, encrypted_password,
+    email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+    created_at, updated_at, confirmation_token, recovery_token,
+    email_change_token_new, email_change
+  ) values (
+    '00000000-0000-0000-0000-000000000000',
+    v_user_id, 'authenticated', 'authenticated', v_email_login,
+    crypt(v_password, gen_salt('bf')), now(),
+    jsonb_build_object('provider','email','providers', array['email']),
+    '{}'::jsonb, now(), now(), '', '', '', ''
+  );
+
+  insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+  values (
+    gen_random_uuid(), v_user_id::text, v_user_id,
+    jsonb_build_object('sub', v_user_id::text, 'email', v_email_login),
+    'email', now(), now(), now()
+  );
+
+  insert into public.profiles (id, institucion_id, role, nombre_completo, documento_identidad, email_contacto, debe_cambiar_password)
+  values (v_user_id, v_institucion_id, 'administrador', trim(p_admin_nombre), v_documento, v_email_real, true);
+
+  -- La auditoría se guarda en el programa de quien crea, que es donde tiene sentido revisarla.
+  insert into public.auditoria (institucion_id, actor_id, accion, entidad, entidad_id, metadata)
+  select p.institucion_id, auth.uid(), 'crear_programa', 'instituciones', v_institucion_id,
+         jsonb_build_object('nombre', v_nombre, 'codigo', v_codigo)
+  from public.profiles p where p.id = auth.uid();
+
+  return query select v_institucion_id, v_codigo, v_email_login, v_password;
+end;
+$$;
+
 -- Aprobación de pago (con auditoría) — mantiene la regla de negocio en un solo lugar.
 create or replace function public.aprobar_pago(p_pago_id uuid, p_aprobar boolean, p_notas text default null)
 returns void
@@ -1649,6 +1789,8 @@ grant execute on function public.es_estudiante_relacionado_con(uuid) to authenti
 revoke all on function public.calificar_intento_examen() from public, anon, authenticated;
 revoke all on function public.set_updated_at() from public, anon, authenticated;
 
+revoke all on function public.crear_programa(text, text, text, text, text, text, text) from public, anon;
+grant execute on function public.crear_programa(text, text, text, text, text, text, text) to authenticated;
 revoke all on function public.crear_usuario_invitado(text, text, text, text, text) from public, anon;
 grant execute on function public.crear_usuario_invitado(text, text, text, text, text) to authenticated;
 revoke all on function public.aprobar_pago(uuid, boolean, text) from public, anon;

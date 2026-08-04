@@ -1,8 +1,9 @@
-# CELM · La Cosecha — Arquitectura del producto
+# Plataforma académica — Arquitectura del producto
 
 ## 1. Qué es esto
 
-**CELM (La Cosecha)** es un ERP académico multi-tenant para institutos bíblicos. Administra
+Es un ERP académico multi-tenant para programas de formación bíblica. Cada **programa**
+(CELM, ELID, Instituto Bíblico, el de otra iglesia…) es un tenant independiente. Administra
 diplomados, módulos, docentes, estudiantes, finanzas, comunicación institucional, recursos,
 certificados y reportes.
 
@@ -30,6 +31,10 @@ Estas decisiones se toman ahora, de forma autónoma y documentada, para evitar r
 | E6 | **Certificados con verificación pública** vía función `security definer` que expone solo campos mínimos por código, no la tabla completa | Verificación de diplomas debe ser pública (código QR) sin filtrar datos de otros estudiantes. |
 | A1 | **Auditoría ligera** (`auditoria`) desde el inicio para acciones sensibles (pagos, certificados, cambios de rol) | Requisito implícito de "nivel empresarial"; trazabilidad es barata de agregar ahora y costosa de reconstruir después. |
 | I1 | **Se reutiliza el mismo proyecto Supabase** que ya usaba escuelitadominical (`Emmanuel-accesskids`, ref `pgimdmthbncgpkitnkgi`) en vez de crear uno nuevo, por instrucción explícita del propietario del producto. Existía un segundo proyecto (`Access Kids - v2`) con datos igualmente reales; se dejó intacto — nunca se tocó. | Evita duplicar infraestructura/costos ya pagados; el dominio de datos anterior (niños/padres) se eliminó del proyecto reutilizado (autorizado explícitamente) antes de aplicar el esquema nuevo. |
+| T1 | **Un "programa" (CELM, ELID, Instituto Bíblico…) es un tenant**: una fila de `instituciones` con su propio código, usuarios, diplomados, finanzas y colores | Es la estructura real del cliente: una iglesia con varios programas de formación. No hizo falta cambiar el modelo — lo que ya existía como "institución" funciona exactamente así. **Contrapartida conocida**: cada perfil pertenece a un solo programa, así que una persona que participe en dos necesita dos cuentas. Si eso resulta común en la práctica, el modelo correcto sería de dos niveles (iglesia → programa) con un perfil y varios roles; conviene decidirlo antes de cargar usuarios reales. |
+| T2 | **`es_administrador()` nunca se usa sola en una política**: siempre acompañada del chequeo de institución de la fila | Fallo real detectado al crear el segundo programa. La función responde "quien llama es administrador", no "es administrador de esta fila". Mientras hubo un solo tenant la diferencia era invisible; con dos, un administrador pasó a leer los perfiles del otro programa (nombre y documento de identidad incluidos) y a poder gestionar su contenido académico, sus matrículas y sus asignaciones de docentes — `puede_gestionar_modulo()` arrastraba el fallo a recursos, tareas, exámenes, asistencia, calificaciones, foro y evidencias. Las ramas de líder y docente nunca estuvieron afectadas porque comparan contra `auth.uid()`. |
+| T3 | **La creación de programas vive en una función `security definer` (`crear_programa`)**, no en políticas RLS | Crear un programa significa insertar filas de OTRA institución, algo que ninguna política puede ni debe permitir. La función valida por su cuenta que quien llama sea administrador. Consecuencia explícita: el rol de administrador es de confianza total en la instalación, no solo dentro de su programa. |
+| H1 | **El líder ve los choques de horario contra otros diplomados a través de una función acotada**, no ampliando su acceso a `modulos` | El choque más peligroso es el invisible: un docente suyo ya ocupado a esa hora en un diplomado que él no ve. Darle acceso a esos módulos rompería el aislamiento del rol; `ocupacion_docentes_fuera_del_diplomado()` devuelve solo día, hora y nombre del diplomado, lo mínimo para detectar el cruce. |
 | E7 | **El alcance del líder en tareas de gestión son los docentes de su propio diplomado**, no todo el instituto | Corrige un fallo real: la RLS original se conformaba con `mi_rol() in ('administrador','lider')`, sin acotar, así que un líder podía asignarle tareas a un docente de otro diplomado, a otro líder o al administrador, y además leía todas las tareas del tenant. Se implementa con `es_docente_de_mi_diplomado()`, coherente con el resto de reglas del rol. El docente sigue sin poder asignar: el trabajo hacia estudiantes ya tiene su sistema (`tareas_academicas`), y duplicarlo daría dos bandejas para lo mismo. |
 | C1 | **El calendario no tiene tabla propia: agrega en el cliente lo que ya existe** (eventos, clases derivadas de `modulos.dia_semana`+hora, `fecha_limite` de tareas, cierre de exámenes, tareas de gestión) en una lista uniforme de items | Duplicar esas fechas en una tabla de calendario obligaría a mantenerlas sincronizadas con su origen mediante triggers, y cualquier desincronización se vería como un calendario que miente. Además, al consultar las tablas originales la RLS ya filtra por rol sin código extra: un estudiante recibe las clases de sus módulos y cero tareas administrativas usando exactamente el mismo camino que un administrador. |
 | C2 | **Las clases se expanden a ocurrencias en el cliente, no se almacenan fecha por fecha** | `modulos` ya define la clase como día de la semana + hora + rango de vigencia, que es como el instituto la piensa ("Teología I, martes 7pm, de marzo a junio"). Materializar cada ocurrencia obligaría a regenerarlas al editar el horario y a decidir qué hacer con las ya pasadas. El rango que se expande nunca supera ~370 días (vista de año), así que el costo es irrelevante. |
@@ -106,6 +111,8 @@ Convenciones:
 17. `eventos` — agenda institucional con afiche; el evento destacado se pinta como banner en el inicio.
 18. `devocionales` — reflexiones institucionales o por módulo, con imagen opcional.
 19. `calendario` — vista agregada (mes/semana/año) de clases, entregas, exámenes, eventos y tareas de gestión.
+20. `programas` — alta de nuevos programas (tenants) y de su primer administrador.
+21. `horario` — rejilla semanal del diplomado con detección de choques de salón y de docente.
 
 ## 6. UX y responsive: tres experiencias, no un solo layout escalado
 
